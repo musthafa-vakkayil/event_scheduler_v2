@@ -2,43 +2,34 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
-	"github.com/musthafa-vakkayil/event_scheduler_v2/utils"
-)
-
-const (
-	authorizationHeaderKey  = "authorization"
-	authorizationTypebearer = "bearer"
-	authorizationPayloadKey = "authorization_payload"
 )
 
 func AuthMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		authorizationHeader := ctx.GetHeader(authorizationHeaderKey)
+		authorizationHeader := ctx.GetHeader(constants.AUTHORIZATION_HEADER_KEY)
 		if len(authorizationHeader) == 0 {
 			err := errors.New("authorization header is missing")
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.ErrorResponse(err))
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, constants.ErrorResponse(err))
 			return
 		}
 
 		fields := strings.Fields(authorizationHeader)
 		if len(fields) < 2 {
 			err := errors.New("invalid authorization header format")
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.ErrorResponse(err))
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, constants.ErrorResponse(err))
 			return
 		}
 
 		authorizationType := strings.ToLower(fields[0])
-		fmt.Println(authorizationType)
-		fmt.Println(authorizationTypebearer)
-		if authorizationType != authorizationTypebearer {
+		if authorizationType != constants.AUTHORIZATION_TYPE_BEARER {
 			err := errors.New("invalid authorization type")
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.ErrorResponse(err))
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, constants.ErrorResponse(err))
 			return
 		}
 
@@ -47,11 +38,11 @@ func AuthMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 		payload, err := tokenMaker.VerifyToken(accessToken)
 
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.ErrorResponse(err))
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, constants.ErrorResponse(err))
 			return
 		}
 
-		ctx.Set(authorizationPayloadKey, payload)
+		ctx.Set(constants.AUTHORIZATION_PAYLOAD_KEY, payload)
 		ctx.Next()
 	}
 }

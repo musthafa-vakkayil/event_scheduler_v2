@@ -12,4 +12,7 @@ sqlc:
 	sqlc generate
 run:
 	go run main.go
-.PHONY: postgres createdb dropdb migrate-up migrate-down sqlc run
+mock:
+	mockgen -package mockdb -destination db/mocks/store.go github.com/musthafa-vakkayil/event_scheduler_v2/db/sqlc Store
+
+.PHONY: postgres createdb dropdb migrate-up migrate-down sqlc run mock

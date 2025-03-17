@@ -1,4 +1,4 @@
-package utils
+package constants
 
 import "github.com/gin-gonic/gin"
 

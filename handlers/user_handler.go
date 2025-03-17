@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	db "github.com/musthafa-vakkayil/event_scheduler_v2/db/sqlc"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/utils"
 )
@@ -39,13 +40,13 @@ type createUserRequest struct {
 func (server *Server) createUser(ctx *gin.Context) {
 	var req createUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(err))
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return
 	}
 
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
 	}
 
@@ -56,15 +57,15 @@ func (server *Server) createUser(ctx *gin.Context) {
 		Email:          req.Email,
 	}
 
-	userData, err := server.store.CreateUser(ctx, arg)
+	userData, err := server.Store.CreateUser(ctx, arg)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
 			switch pqErr.Code.Name() {
 			case "unique_violation":
-				ctx.JSON(http.StatusForbidden, utils.ErrorResponse(err))
+				ctx.JSON(http.StatusForbidden, constants.ErrorResponse(err))
 			}
 		}
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
 	}
 
@@ -80,17 +81,17 @@ type getUserRequest struct {
 func (server *Server) getUser(ctx *gin.Context) {
 	var req getUserRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(err))
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return
 	}
 
-	account, err := server.store.GetUser(ctx, req.Username)
+	account, err := server.Store.GetUser(ctx, req.Username)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, utils.ErrorResponse(err))
+			ctx.JSON(http.StatusNotFound, constants.ErrorResponse(err))
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
 	}
 
@@ -110,29 +111,29 @@ type loginResponse struct {
 func (server *Server) Login(ctx *gin.Context) {
 	var req loginRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(err))
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return
 	}
 
-	userData, err := server.store.GetUser(ctx, req.Username)
+	userData, err := server.Store.GetUser(ctx, req.Username)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusForbidden, utils.ErrorResponse(err))
+			ctx.JSON(http.StatusForbidden, constants.ErrorResponse(err))
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
 	}
 
 	err = utils.CheckPassword(req.Password, userData.HashedPassword)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(err))
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return
 	}
 
-	token, err := server.tokenMaker.CreateToken(req.Username, server.config.TokenDuration)
+	token, err := server.TokenMaker.CreateToken(req.Username, server.Config.TokenDuration)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
 	}
 
