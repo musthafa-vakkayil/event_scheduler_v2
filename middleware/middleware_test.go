@@ -55,7 +55,7 @@ func TestAuthMiddleware(t *testing.T) {
 			name:      "NoAuthorization",
 			setupAuth: func(t *testing.T, request *http.Request) {}, // No auth added
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusBadRequest, recorder.Code)
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 		{
@@ -64,7 +64,7 @@ func TestAuthMiddleware(t *testing.T) {
 				addAuthorization(t, request, tokenMaker, "invalid", "user", time.Minute)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusBadRequest, recorder.Code)
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 		{
@@ -73,7 +73,7 @@ func TestAuthMiddleware(t *testing.T) {
 				addAuthorization(t, request, tokenMaker, constants.AUTHORIZATION_TYPE_BEARER, "user", -time.Minute)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusBadRequest, recorder.Code)
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}

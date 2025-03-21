@@ -37,7 +37,7 @@ type createUserRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 }
 
-func (server *Server) createUser(ctx *gin.Context) {
+func (server *Server) CreateUser(ctx *gin.Context) {
 	var req createUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
@@ -78,7 +78,7 @@ type getUserRequest struct {
 	Username string `uri:"username" binding:"required,alphanum"`
 }
 
-func (server *Server) getUser(ctx *gin.Context) {
+func (server *Server) GetUser(ctx *gin.Context) {
 	var req getUserRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
@@ -127,7 +127,7 @@ func (server *Server) Login(ctx *gin.Context) {
 
 	err = utils.CheckPassword(req.Password, userData.HashedPassword)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		ctx.JSON(http.StatusUnauthorized, constants.ErrorResponse(err))
 		return
 	}
 
