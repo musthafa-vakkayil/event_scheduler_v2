@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"database/sql"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -55,6 +54,10 @@ func (server *Server) GetUser(ctx *gin.Context) {
 
 	user, err := repo.GetUser(server.GormDB, req.Username)
 	if err != nil {
+		if err.Error() == "user not found" {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
 	}
@@ -83,8 +86,8 @@ func (server *Server) Login(ctx *gin.Context) {
 
 	userData, err := repo.GetUser(server.GormDB, req.Username)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusForbidden, constants.ErrorResponse(err))
+		if err.Error() == "user not found" {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))

@@ -44,8 +44,8 @@ func (server *Server) SetupRoutes() {
 	authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.TokenMaker))
 
 	authRoutes.GET("/users/:username", server.GetUser)
-	// authRoutes.POST("/events", server.CreateEvent)
-	// authRoutes.GET("/events", server.ListEvents)
+	authRoutes.POST("/events", server.CreateEvent)
+	authRoutes.GET("/events", server.ListEvents)
 	authRoutes.DELETE("/users/:username", server.DeleteUser)
 
 	server.Router = router

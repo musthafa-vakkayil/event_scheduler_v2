@@ -1,6 +1,14 @@
 package handlers
 
 import (
+	"errors"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
 	"gorm.io/datatypes"
 )
 
@@ -12,96 +20,58 @@ type CreateEventRequest struct {
 	ApiPayload  datatypes.JSON `json:"api_payload"`
 }
 
-// func (server *Server) CreateEvent(ctx *gin.Context) {
-// 	var req CreateEventRequest
-// 	if err := ctx.ShouldBindJSON(&req); err != nil {
-// 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
-// 		return
-// 	}
+func (server *Server) CreateEvent(ctx *gin.Context) {
+	var req CreateEventRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
+	}
 
-// 	authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
+	authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
 
-// 	arg := db.CreateEventParams{
-// 		Name:        req.Name,
-// 		Type:        db.EventTypes(req.Type),
-// 		ApiEndPoint: req.ApiEndpoint,
-// 		ApiMethod: sql.NullString{
-// 			String: req.ApiMethod,
-// 			Valid:  true,
-// 		},
-// 		CreatedBy: authPayload.Username,
-// 	}
+	// Validation for API Trigger
+	if req.Type == "API" && req.ApiMethod != "GET" && req.ApiMethod != "DELETE" && req.ApiPayload == nil {
+		err := errors.New("api payload is required for methods other than GET and delete")
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
+	}
 
-// 	// Validation for API Trigger
-// 	if req.Type == "API" && req.ApiMethod != "GET" && req.ApiMethod != "DELETE" && req.ApiPayload == nil {
-// 		err := errors.New("api payload is required for methods other than GET and delete")
-// 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
-// 		return
-// 	}
+	arg := models.Event{
+		Name:           req.Name,
+		Type:           req.Type,
+		ApiEndPoint:    req.ApiEndpoint,
+		ApiMethod:      req.ApiMethod,
+		CreatedBy:      authPayload.Username,
+		ApiRequestBody: req.ApiPayload,
+	}
 
-// 	// Handle ApiPayload safely
-// 	if len(req.ApiPayload) > 0 {
-// 		arg.ApiRequestBody = pqtype.NullRawMessage{
-// 			RawMessage: []byte(req.ApiPayload),
-// 			Valid:      true,
-// 		}
-// 	} else {
-// 		arg.ApiRequestBody = pqtype.NullRawMessage{
-// 			Valid: false,
-// 		}
-// 	}
+	event, err := repo.CreateEvent(server.GormDB, arg)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+		return
+	}
 
-// 	event, err := server.Store.CreateEvent(ctx, arg)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
-// 		return
-// 	}
-
-// 	ctx.JSON(http.StatusOK, event)
-// }
-
-type ListEventsRequest struct {
-	PageNumber  int32 `form:"pageNumber" binding:"required,min=1"`
-	PageSize    int32 `form:"pageSize" binding:"required,min=1"`
-	CreatedByMe bool  `form:"createdByMe"`
+	ctx.JSON(http.StatusOK, event)
 }
 
-// func (server *Server) ListEvents(ctx *gin.Context) {
-// 	var req ListEventsRequest
-// 	if err := ctx.ShouldBindQuery(&req); err != nil {
-// 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
-// 		return
-// 	}
+type ListEventsRequest struct {
+	PageNumber  int  `form:"pageNumber" binding:"required,min=1"`
+	PageSize    int  `form:"pageSize" binding:"required,min=1"`
+	CreatedByMe bool `form:"createdByMe"`
+}
 
-// 	authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
+func (server *Server) ListEvents(ctx *gin.Context) {
+	var req ListEventsRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
+	}
 
-// 	var events []db.Event
-// 	var err error
+	events, err := repo.ListEvents(server.GormDB, req.PageSize, (req.PageNumber-1)*req.PageSize)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+		return
+	}
 
-// 	if req.CreatedByMe {
-// 		args := db.ListUserEventsParams{
-// 			Limit:     req.PageSize,
-// 			Offset:    (req.PageNumber - 1) * req.PageSize,
-// 			CreatedBy: authPayload.Username,
-// 		}
-// 		events, err = server.Store.ListUserEvents(ctx, args)
-// 		if err != nil {
-// 			ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
-// 			return
-// 		}
-// 	} else {
-// 		args := db.ListEventsParams{
-// 			Limit:  req.PageSize,
-// 			Offset: (req.PageNumber - 1) * req.PageSize,
-// 		}
-// 		events, err = server.Store.ListEvents(ctx, args)
-// 		if err != nil {
-// 			ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
-// 			return
-// 		}
-// 	}
-
-// 	fmt.Println(events[0].ApiMethod)
-
-// 	ctx.JSON(http.StatusOK, events)
-// }
+	ctx.JSON(http.StatusOK, events)
+}
