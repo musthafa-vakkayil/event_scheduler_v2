@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
-	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/utils"
 )
 
@@ -30,7 +29,7 @@ func (server *Server) CreateUser(ctx *gin.Context) {
 		Email:          req.Email,
 	}
 
-	usr, err := repo.CreateUser(server.GormDB, user)
+	usr, err := server.Repo.CreateUser(user)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
@@ -52,7 +51,7 @@ func (server *Server) GetUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := repo.GetUser(server.GormDB, req.Username)
+	user, err := server.Repo.GetUser(req.Username)
 	if err != nil {
 		if err.Error() == "user not found" {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
@@ -84,7 +83,7 @@ func (server *Server) Login(ctx *gin.Context) {
 		return
 	}
 
-	userData, err := repo.GetUser(server.GormDB, req.Username)
+	userData, err := server.Repo.GetUser(req.Username)
 	if err != nil {
 		if err.Error() == "user not found" {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
@@ -127,7 +126,7 @@ func (server *Server) DeleteUser(ctx *gin.Context) {
 		return
 	}
 
-	if err := repo.DeleteUser(server.GormDB, req.Username); err != nil {
+	if err := server.Repo.DeleteUser(req.Username); err != nil {
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
 	}

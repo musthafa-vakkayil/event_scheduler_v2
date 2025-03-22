@@ -13,12 +13,6 @@ func main() {
 	if err != nil {
 		log.Fatal("unable to read config", err)
 	}
-	// conn, err := sql.Open(config.DBDriver, config.DBSource)
-	// if err != nil {
-	// 	log.Fatal("cannot connect to db:", err)
-	// }
-
-	// store := db.NewStore(conn)
 
 	// Initialize GORM DB
 	gormDB, err := handlers.ConnectGORM(config)

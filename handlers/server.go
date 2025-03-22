@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/config"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/middleware"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -20,6 +21,7 @@ type Server struct {
 	TokenMaker token.Maker
 	Router     *gin.Engine
 	GormDB     *gorm.DB
+	Repo       *repo.Repo
 }
 
 // NewServer creates a new HTTP server and setup routing
@@ -28,7 +30,11 @@ func NewServer(config config.Config, gormDB *gorm.DB) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable create token maker %w", err)
 	}
-	server := &Server{TokenMaker: maker, Config: config, GormDB: gormDB}
+
+	// Initialize repository
+	repository := repo.NewRepository(gormDB)
+
+	server := &Server{TokenMaker: maker, Config: config, GormDB: gormDB, Repo: repository}
 
 	server.SetupRoutes()
 
