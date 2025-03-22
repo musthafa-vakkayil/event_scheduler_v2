@@ -1,0 +1,24 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:17.4-alpine3.21
+    environment:
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_DB=event_scheduler
+    ports:
+      - "1234:5432"
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_PASSWORD=12345
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=event_scheduler
+    depends_on:
+      - postgres
+    entrypoint: ["/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh"]
+    command: ["/app/main"]

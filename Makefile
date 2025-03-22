@@ -1,5 +1,5 @@
 postgres:
-	docker run --name docker_postgres -e POSTGRES_PASSWORD=12345 -p 5678:5432 -d postgres
+	docker run --name docker_postgres --network  event-network -e POSTGRES_PASSWORD=12345 -p 5678:5432 -d postgres
 createdb:
 	docker exec -it docker_postgres createdb --username=postgres --owner=postgres event_scheduler
 dropdb:
