@@ -9,3 +9,19 @@ type Log struct {
 	Status     string    `json:"status" gorm:"not null"`
 	IsArchived bool      `json:"is_archived"`
 }
+
+type LogsResponse struct {
+	ID         int64     `json:"id"`
+	Name       string    `json:"name"`
+	CreatedBy  string    `json:"created_by"`
+	ExecutedOn time.Time `json:"executed_on"`
+	Status     string    `json:"status"`
+	IsArchived bool      `json:"is_archived"`
+}
+
+type ListLogsRequest struct {
+	PageNumber   int  `form:"pageNumber" binding:"required,min=1"`
+	PageSize     int  `form:"pageSize" binding:"required,min=1"`
+	OnlyActive   bool `form:"onlyActive"`
+	OnlyArchived bool `form:"onlyArchived"`
+}

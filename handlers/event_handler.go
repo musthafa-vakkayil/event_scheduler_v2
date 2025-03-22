@@ -90,7 +90,7 @@ func (server *Server) ExecuteAPIEvent(ctx *gin.Context) {
 	event, err := server.Repo.GetEvent(req.ID)
 	if err != nil {
 		if err.Error() == "event not found" {
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Event not found"})
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))

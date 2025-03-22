@@ -14,6 +14,7 @@ type Repository interface {
 	ExecuteEvent(eventID int64, status string) error
 	DeleteEvent(eventID int64) error
 	DeleteUser(username string) error
+	ListLogs(onlyActive bool, onlyArchived bool, limit int, offset int) ([]models.LogsResponse, error)
 }
 
 // Repository struct holds the GORM database instance

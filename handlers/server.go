@@ -48,11 +48,14 @@ func (server *Server) SetupRoutes() {
 
 	authRoutes.GET("/users/:username", server.GetUser)
 	authRoutes.DELETE("/users/:username", server.DeleteUser)
+
 	authRoutes.POST("/events", server.CreateEvent)
 	authRoutes.GET("/events", server.ListEvents)
 	authRoutes.GET("/events/:id", server.GetEvent)
 	authRoutes.GET("/events/:id/execute", server.ExecuteAPIEvent)
 	authRoutes.DELETE("/events/:id", server.DeleteEvent)
+
+	authRoutes.GET("/logs", server.ListLogs)
 }
 
 // Start runs the HTTP server on a specific address

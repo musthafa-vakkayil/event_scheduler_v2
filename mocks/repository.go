@@ -208,6 +208,36 @@ func (_m *Repository) ListEvents(limit int, offset int) ([]models.Event, error) 
 	return r0, r1
 }
 
+// ListLogs provides a mock function with given fields: onlyActive, onlyArchived, limit, offset
+func (_m *Repository) ListLogs(onlyActive bool, onlyArchived bool, limit int, offset int) ([]models.LogsResponse, error) {
+	ret := _m.Called(onlyActive, onlyArchived, limit, offset)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListLogs")
+	}
+
+	var r0 []models.LogsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(bool, bool, int, int) ([]models.LogsResponse, error)); ok {
+		return rf(onlyActive, onlyArchived, limit, offset)
+	}
+	if rf, ok := ret.Get(0).(func(bool, bool, int, int) []models.LogsResponse); ok {
+		r0 = rf(onlyActive, onlyArchived, limit, offset)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.LogsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(bool, bool, int, int) error); ok {
+		r1 = rf(onlyActive, onlyArchived, limit, offset)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewRepository creates a new instance of Repository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewRepository(t interface {
