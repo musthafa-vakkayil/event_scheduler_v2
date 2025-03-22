@@ -20,8 +20,7 @@ type Server struct {
 	Config     config.Config
 	TokenMaker token.Maker
 	Router     *gin.Engine
-	GormDB     *gorm.DB
-	Repo       *repo.Repo
+	Repo       repo.Repository
 }
 
 // NewServer creates a new HTTP server and setup routing
@@ -34,7 +33,7 @@ func NewServer(config config.Config, gormDB *gorm.DB) (*Server, error) {
 	// Initialize repository
 	repository := repo.NewRepository(gormDB)
 
-	server := &Server{TokenMaker: maker, Config: config, GormDB: gormDB, Repo: repository}
+	server := &Server{TokenMaker: maker, Config: config, Repo: repository}
 
 	server.SetupRoutes()
 
