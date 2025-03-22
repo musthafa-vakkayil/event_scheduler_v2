@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
-	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
 	"gorm.io/datatypes"
 )
@@ -45,7 +44,7 @@ func (server *Server) CreateEvent(ctx *gin.Context) {
 		ApiRequestBody: req.ApiPayload,
 	}
 
-	event, err := repo.CreateEvent(server.GormDB, arg)
+	event, err := server.Repo.CreateEvent(arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
@@ -67,11 +66,35 @@ func (server *Server) ListEvents(ctx *gin.Context) {
 		return
 	}
 
-	events, err := repo.ListEvents(server.GormDB, req.PageSize, (req.PageNumber-1)*req.PageSize)
+	events, err := server.Repo.ListEvents(req.PageSize, (req.PageNumber-1)*req.PageSize)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
 	}
 
 	ctx.JSON(http.StatusOK, events)
+}
+
+type getEventRequest struct {
+	ID int `uri:"id" binding:"required"`
+}
+
+func (server *Server) GetEvent(ctx *gin.Context) {
+	var req getEventRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
+	}
+
+	event, err := server.Repo.GetEvent(req.ID)
+	if err != nil {
+		if err.Error() == "event not found" {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, event)
 }

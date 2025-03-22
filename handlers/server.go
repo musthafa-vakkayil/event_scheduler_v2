@@ -50,9 +50,10 @@ func (server *Server) SetupRoutes() {
 	authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.TokenMaker))
 
 	authRoutes.GET("/users/:username", server.GetUser)
+	authRoutes.DELETE("/users/:username", server.DeleteUser)
 	authRoutes.POST("/events", server.CreateEvent)
 	authRoutes.GET("/events", server.ListEvents)
-	authRoutes.DELETE("/users/:username", server.DeleteUser)
+	authRoutes.GET("/events/:id", server.GetEvent)
 
 	server.Router = router
 }
@@ -66,11 +67,11 @@ func (server *Server) Start(address string) error {
 func ConnectGORM(cfg config.Config) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Kolkata",
-		"localhost",       // e.g., "localhost"
-		"postgres",        // e.g., "postgres"
-		"12345",           // e.g., "yourpassword"
-		"event_scheduler", // e.g., "mydb"
-		"5678",            // e.g., "5432"
+		cfg.DBHost,     // e.g., "localhost"
+		cfg.DBUser,     // e.g., "postgres"
+		cfg.DBPassword, // e.g., "yourpassword"
+		cfg.DBName,     // e.g., "mydb"
+		cfg.DBPort,     // e.g., "5432"
 	)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
