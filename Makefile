@@ -5,9 +5,9 @@ createdb:
 dropdb:
 	docker exec -it docker_postgres dropdb --username=postgres event_scheduler
 migrate-up:
-	migrate -path db/migrations -database "postgresql://postgres:12345@localhost:5678/event_scheduler?sslmode=disable" -verbose up
+	migrate -path migrations -database "postgresql://postgres:12345@localhost:5678/event_scheduler?sslmode=disable" -verbose up
 migrate-down:
-	migrate -path db/migrations -database "postgresql://postgres:12345@localhost:5678/event_scheduler?sslmode=disable" -verbose down
+	migrate -path migrations -database "postgresql://postgres:12345@localhost:5678/event_scheduler?sslmode=disable" -verbose down
 sqlc:
 	sqlc generate
 run:

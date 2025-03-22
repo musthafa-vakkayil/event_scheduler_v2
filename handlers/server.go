@@ -2,29 +2,33 @@ package handlers
 
 import (
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/config"
-	db "github.com/musthafa-vakkayil/event_scheduler_v2/db/sqlc"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/middleware"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // Server serves HTTP requests for our banking service
 type Server struct {
 	Config     config.Config
-	Store      db.Store
 	TokenMaker token.Maker
 	Router     *gin.Engine
+	GormDB     *gorm.DB
 }
 
 // NewServer creates a new HTTP server and setup routing
-func NewServer(config config.Config, store db.Store) (*Server, error) {
+func NewServer(config config.Config, gormDB *gorm.DB) (*Server, error) {
 	maker, err := token.NewJWTMaker(config.JWTSecretKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable create token maker %w", err)
 	}
-	server := &Server{Store: store, TokenMaker: maker, Config: config}
+	server := &Server{TokenMaker: maker, Config: config, GormDB: gormDB}
 
 	server.SetupRoutes()
 
@@ -40,8 +44,9 @@ func (server *Server) SetupRoutes() {
 	authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.TokenMaker))
 
 	authRoutes.GET("/users/:username", server.GetUser)
-	authRoutes.POST("/events", server.CreateEvent)
-	authRoutes.GET("/events", server.ListEvents)
+	// authRoutes.POST("/events", server.CreateEvent)
+	// authRoutes.GET("/events", server.ListEvents)
+	authRoutes.DELETE("/users/:username", server.DeleteUser)
 
 	server.Router = router
 }
@@ -49,4 +54,36 @@ func (server *Server) SetupRoutes() {
 // Start runs the HTTP server on a specific address
 func (server *Server) Start(address string) error {
 	return server.Router.Run(address)
+}
+
+// ConnectGORM initializes a GORM DB connection
+func ConnectGORM(cfg config.Config) (*gorm.DB, error) {
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Kolkata",
+		"localhost",       // e.g., "localhost"
+		"postgres",        // e.g., "postgres"
+		"12345",           // e.g., "yourpassword"
+		"event_scheduler", // e.g., "mydb"
+		"5678",            // e.g., "5432"
+	)
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to GORM DB: %w", err)
+	}
+
+	// Configure connection pool
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("failed to get DB from GORM: %v", err)
+	}
+
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(100)
+	sqlDB.SetConnMaxLifetime(5 * time.Minute)
+
+	fmt.Println("✅ GORM DB connected successfully")
+	return db, nil
 }

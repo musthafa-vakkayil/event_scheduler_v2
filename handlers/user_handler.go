@@ -3,42 +3,16 @@ package handlers
 import (
 	"database/sql"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
-	db "github.com/musthafa-vakkayil/event_scheduler_v2/db/sqlc"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/utils"
 )
 
-type userDto struct {
-	Username          string    `json:"username"`
-	FullName          string    `json:"full_name"`
-	Email             string    `json:"email"`
-	PasswordChangedAt time.Time `json:"changetAt"`
-	CreatedAt         time.Time `json:"createdAt"`
-}
-
-func convertToUserDto(user db.User) userDto {
-	return userDto{
-		Username:          user.Username,
-		FullName:          user.FullName,
-		Email:             user.Email,
-		CreatedAt:         user.CreatedAt,
-		PasswordChangedAt: user.PasswordChangedAt,
-	}
-}
-
-type createUserRequest struct {
-	Username string `json:"username" binding:"required,alphanum"`
-	Password string `json:"password" binding:"required,min=6"`
-	FullName string `json:"full_name" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
-}
-
 func (server *Server) CreateUser(ctx *gin.Context) {
-	var req createUserRequest
+	var req models.CreateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return
@@ -50,28 +24,22 @@ func (server *Server) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	arg := db.CreateUserParams{
+	user := models.User{
 		Username:       req.Username,
 		HashedPassword: hashedPassword,
 		FullName:       req.FullName,
 		Email:          req.Email,
 	}
 
-	userData, err := server.Store.CreateUser(ctx, arg)
+	usr, err := repo.CreateUser(server.GormDB, user)
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
-			switch pqErr.Code.Name() {
-			case "unique_violation":
-				ctx.JSON(http.StatusForbidden, constants.ErrorResponse(err))
-			}
-		}
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
 	}
 
-	user := convertToUserDto(userData)
+	userDto := models.ConvertToUserDto(usr)
 
-	ctx.JSON(http.StatusOK, user)
+	ctx.JSON(http.StatusOK, userDto)
 }
 
 type getUserRequest struct {
@@ -85,17 +53,15 @@ func (server *Server) GetUser(ctx *gin.Context) {
 		return
 	}
 
-	account, err := server.Store.GetUser(ctx, req.Username)
+	user, err := repo.GetUser(server.GormDB, req.Username)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, constants.ErrorResponse(err))
-			return
-		}
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, account)
+	userDto := models.ConvertToUserDto(user)
+
+	ctx.JSON(http.StatusOK, userDto)
 }
 
 type loginRequest struct {
@@ -104,8 +70,8 @@ type loginRequest struct {
 }
 
 type loginResponse struct {
-	User  userDto `json:"user"`
-	Token string  `json:"token"`
+	User  models.UserDto `json:"user"`
+	Token string         `json:"token"`
 }
 
 func (server *Server) Login(ctx *gin.Context) {
@@ -115,7 +81,7 @@ func (server *Server) Login(ctx *gin.Context) {
 		return
 	}
 
-	userData, err := server.Store.GetUser(ctx, req.Username)
+	userData, err := repo.GetUser(server.GormDB, req.Username)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusForbidden, constants.ErrorResponse(err))
@@ -137,7 +103,7 @@ func (server *Server) Login(ctx *gin.Context) {
 		return
 	}
 
-	user := convertToUserDto(userData)
+	user := models.ConvertToUserDto(userData)
 
 	response := loginResponse{
 		User:  user,
@@ -145,4 +111,23 @@ func (server *Server) Login(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, response)
+}
+
+type DeleteUserRequest struct {
+	Username string `uri:"username" binding:"required,alphanum"`
+}
+
+func (server *Server) DeleteUser(ctx *gin.Context) {
+	var req getUserRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
+	}
+
+	if err := repo.DeleteUser(server.GormDB, req.Username); err != nil {
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, "OK")
 }
