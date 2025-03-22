@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 
-	_ "github.com/lib/pq"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/config"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/handlers"
 )

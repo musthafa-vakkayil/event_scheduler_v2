@@ -8,11 +8,9 @@ migrate-up:
 	migrate -path migrations -database "postgresql://postgres:12345@localhost:5678/event_scheduler?sslmode=disable" -verbose up
 migrate-down:
 	migrate -path migrations -database "postgresql://postgres:12345@localhost:5678/event_scheduler?sslmode=disable" -verbose down
-sqlc:
-	sqlc generate
+mock:
+	mockery --dir=repo --name=Repository --output=mocks --case=underscore
 run:
 	go run main.go
-mock:
-	mockgen -package mockdb -destination db/mocks/store.go github.com/musthafa-vakkayil/event_scheduler_v2/db/sqlc Store
 
-.PHONY: postgres createdb dropdb migrate-up migrate-down sqlc run mock
+.PHONY: postgres createdb dropdb migrate-up migrate-down run mock

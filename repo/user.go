@@ -7,16 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// Repository struct holds the GORM database instance
-type Repo struct {
-	DB *gorm.DB
-}
-
-// NewRepository initializes and returns a Repository instance
-func NewRepository(db *gorm.DB) *Repo {
-	return &Repo{DB: db}
-}
-
 // DeleteUser deletes a user by username
 func (r *Repo) DeleteUser(username string) error {
 	return r.DB.Where("username = ?", username).Delete(&models.User{}).Error
