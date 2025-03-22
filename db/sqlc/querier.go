@@ -20,6 +20,7 @@ type Querier interface {
 	GetUser(ctx context.Context, username string) (User, error)
 	ListEvents(ctx context.Context, arg ListEventsParams) ([]Event, error)
 	ListLogs(ctx context.Context, arg ListLogsParams) ([]Log, error)
+	ListUserEvents(ctx context.Context, arg ListUserEventsParams) ([]Event, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }

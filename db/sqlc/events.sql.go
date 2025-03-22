@@ -135,3 +135,50 @@ func (q *Queries) ListEvents(ctx context.Context, arg ListEventsParams) ([]Event
 	}
 	return items, nil
 }
+
+const listUserEvents = `-- name: ListUserEvents :many
+SELECT id, name, type, api_end_point, api_method, api_request_body, created_by, created_at, executed_at FROM events
+WHERE created_by = $1
+ORDER BY id
+LIMIT $2
+OFFSET $3
+`
+
+type ListUserEventsParams struct {
+	CreatedBy string
+	Limit     int32
+	Offset    int32
+}
+
+func (q *Queries) ListUserEvents(ctx context.Context, arg ListUserEventsParams) ([]Event, error) {
+	rows, err := q.db.QueryContext(ctx, listUserEvents, arg.CreatedBy, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Event{}
+	for rows.Next() {
+		var i Event
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Type,
+			&i.ApiEndPoint,
+			&i.ApiMethod,
+			&i.ApiRequestBody,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.ExecutedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
