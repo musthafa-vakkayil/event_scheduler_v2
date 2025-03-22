@@ -6,12 +6,14 @@ import (
 )
 
 type Repository interface {
-	DeleteUser(username string) error
 	CreateUser(user models.User) (models.User, error)
 	GetUser(username string) (models.User, error)
 	CreateEvent(event models.Event) (models.Event, error)
 	GetEvent(id int) (models.Event, error)
 	ListEvents(limit, offset int) ([]models.Event, error)
+	ExecuteEvent(eventID int64, status string) error
+	DeleteEvent(eventID int64) error
+	DeleteUser(username string) error
 }
 
 // Repository struct holds the GORM database instance

@@ -2,6 +2,7 @@ package repo
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
 	"gorm.io/gorm"
@@ -42,4 +43,53 @@ func (r *Repo) ListEvents(limit, offset int) ([]models.Event, error) {
 	}
 
 	return events, nil
+}
+
+func (r *Repo) ExecuteEvent(eventID int64, status string) error {
+	tx := r.DB.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	// Update executed_at in events table
+	if err := tx.Model(&models.Event{}).Where("id = ?", eventID).Update("executed_at", time.Now()).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Create log entry
+	log := models.Log{
+		EventId:    eventID,
+		ExecutedOn: time.Now(),
+		Status:     status,
+		IsArchived: false,
+	}
+
+	if err := tx.Create(&log).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
+}
+
+func (r *Repo) DeleteEvent(eventID int64) error {
+	tx := r.DB.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	// Delete logs associated with the event
+	if err := tx.Where("event_id = ?", eventID).Delete(&models.Log{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Delete the event
+	if err := tx.Where("id = ?", eventID).Delete(&models.Event{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }

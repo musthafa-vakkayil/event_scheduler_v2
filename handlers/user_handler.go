@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/utils"
 )
 
@@ -99,4 +101,28 @@ func (server *Server) Login(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, response)
+}
+
+func (server *Server) DeleteUser(ctx *gin.Context) {
+	var req models.GetUserRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
+	}
+
+	authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
+
+	if authPayload.Username != req.Username {
+		err := errors.New("cannot delete other users")
+		ctx.JSON(http.StatusUnauthorized, constants.ErrorResponse(err))
+		return
+	}
+
+	err := server.Repo.DeleteUser(req.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, "OK")
 }

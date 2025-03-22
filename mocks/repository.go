@@ -68,6 +68,24 @@ func (_m *Repository) CreateUser(user models.User) (models.User, error) {
 	return r0, r1
 }
 
+// DeleteEvent provides a mock function with given fields: eventID
+func (_m *Repository) DeleteEvent(eventID int64) error {
+	ret := _m.Called(eventID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteEvent")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int64) error); ok {
+		r0 = rf(eventID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteUser provides a mock function with given fields: username
 func (_m *Repository) DeleteUser(username string) error {
 	ret := _m.Called(username)
@@ -79,6 +97,24 @@ func (_m *Repository) DeleteUser(username string) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string) error); ok {
 		r0 = rf(username)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ExecuteEvent provides a mock function with given fields: eventID, status
+func (_m *Repository) ExecuteEvent(eventID int64, status string) error {
+	ret := _m.Called(eventID, status)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ExecuteEvent")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int64, string) error); ok {
+		r0 = rf(eventID, status)
 	} else {
 		r0 = ret.Error(0)
 	}

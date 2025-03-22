@@ -1,0 +1,513 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>handlers: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/event_handler.go (0.0%)</option>
+				
+				<option value="file1">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/server.go (54.8%)</option>
+				
+				<option value="file2">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/user_handler.go (68.8%)</option>
+				
+				<option value="file3">github.com/musthafa-vakkayil/event_scheduler_v2/middleware/middleware.go (87.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package handlers
+
+import (
+        "errors"
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/constants"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/models"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/token"
+)
+
+func (server *Server) CreateEvent(ctx *gin.Context) <span class="cov0" title="0">{
+        var req models.CreateEventRequest
+        if err := ctx.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
+
+        // Validation for API Trigger
+        if req.Type == "API" &amp;&amp; req.ApiMethod != "GET" &amp;&amp; req.ApiMethod != "DELETE" &amp;&amp; req.ApiPayload == nil </span><span class="cov0" title="0">{
+                err := errors.New("api payload is required for methods other than GET and delete")
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">arg := models.Event{
+                Name:           req.Name,
+                Type:           req.Type,
+                ApiEndPoint:    req.ApiEndpoint,
+                ApiMethod:      req.ApiMethod,
+                CreatedBy:      authPayload.Username,
+                ApiRequestBody: req.ApiPayload,
+        }
+
+        event, err := server.Repo.CreateEvent(arg)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">ctx.JSON(http.StatusOK, event)</span>
+}
+
+func (server *Server) ListEvents(ctx *gin.Context) <span class="cov0" title="0">{
+        var req models.ListEventsRequest
+        if err := ctx.ShouldBindQuery(&amp;req); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">events, err := server.Repo.ListEvents(req.PageSize, (req.PageNumber-1)*req.PageSize)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">ctx.JSON(http.StatusOK, events)</span>
+}
+
+func (server *Server) GetEvent(ctx *gin.Context) <span class="cov0" title="0">{
+        var req models.GetEventRequest
+        if err := ctx.ShouldBindUri(&amp;req); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">event, err := server.Repo.GetEvent(req.ID)
+        if err != nil </span><span class="cov0" title="0">{
+                if err.Error() == "event not found" </span><span class="cov0" title="0">{
+                        ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+                        return
+                }</span>
+                <span class="cov0" title="0">ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return</span>
+        }
+
+        <span class="cov0" title="0">ctx.JSON(http.StatusOK, event)</span>
+}
+
+func (server *Server) ExecuteAPIEvent(ctx *gin.Context) <span class="cov0" title="0">{
+        var req models.GetEventRequest
+        if err := ctx.ShouldBindUri(&amp;req); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">event, err := server.Repo.GetEvent(req.ID)
+        if err != nil </span><span class="cov0" title="0">{
+                if err.Error() == "event not found" </span><span class="cov0" title="0">{
+                        ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+                        return
+                }</span>
+                <span class="cov0" title="0">ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return</span>
+        }
+
+        <span class="cov0" title="0">if event.Type != "API" </span><span class="cov0" title="0">{
+                err := errors.New("cannot excute events other than API")
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">err = server.Repo.ExecuteEvent(event.ID, "SUCCESS")
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">ctx.JSON(http.StatusOK, "OK")</span>
+}
+
+func (server *Server) DeleteEvent(ctx *gin.Context) <span class="cov0" title="0">{
+        var req models.GetEventRequest
+        if err := ctx.ShouldBindUri(&amp;req); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">err := server.Repo.DeleteEvent(int64(req.ID))
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">ctx.JSON(http.StatusOK, "OK")</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package handlers
+
+import (
+        "fmt"
+        "log"
+        "time"
+
+        "github.com/gin-gonic/gin"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/config"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/middleware"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/repo"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/token"
+        "gorm.io/driver/postgres"
+        "gorm.io/gorm"
+        "gorm.io/gorm/logger"
+)
+
+// Server serves HTTP requests for our banking service
+type Server struct {
+        Config     config.Config
+        TokenMaker token.Maker
+        Router     *gin.Engine
+        Repo       repo.Repository
+}
+
+// NewServer creates a new HTTP server and setup routing
+func NewServer(config config.Config, repo repo.Repository) (*Server, error) <span class="cov8" title="1">{
+        maker, err := token.NewJWTMaker(config.JWTSecretKey)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("unable create token maker %w", err)
+        }</span>
+
+        <span class="cov8" title="1">server := &amp;Server{TokenMaker: maker, Config: config, Repo: repo}
+
+        server.SetupRoutes()
+
+        return server, nil</span>
+}
+
+func (server *Server) SetupRoutes() <span class="cov8" title="1">{
+        server.Router = gin.Default()
+        router := server.Router
+
+        router.POST("/login", server.Login)
+        router.POST("/users", server.CreateUser)
+
+        authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.TokenMaker))
+
+        authRoutes.GET("/users/:username", server.GetUser)
+        authRoutes.DELETE("/users/:username", server.DeleteUser)
+        authRoutes.POST("/events", server.CreateEvent)
+        authRoutes.GET("/events", server.ListEvents)
+        authRoutes.GET("/events/:id", server.GetEvent)
+        authRoutes.GET("/events/:id/execute", server.ExecuteAPIEvent)
+        authRoutes.DELETE("/events/:id", server.DeleteEvent)
+}</span>
+
+// Start runs the HTTP server on a specific address
+func (server *Server) Start(address string) error <span class="cov0" title="0">{
+        return server.Router.Run(address)
+}</span>
+
+// ConnectGORM initializes a GORM DB connection
+func ConnectGORM(cfg config.Config) (*gorm.DB, error) <span class="cov0" title="0">{
+        dsn := fmt.Sprintf(
+                "host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Kolkata",
+                cfg.DBHost,     // e.g., "localhost"
+                cfg.DBUser,     // e.g., "postgres"
+                cfg.DBPassword, // e.g., "yourpassword"
+                cfg.DBName,     // e.g., "mydb"
+                cfg.DBPort,     // e.g., "5432"
+        )
+
+        db, err := gorm.Open(postgres.Open(dsn), &amp;gorm.Config{
+                Logger: logger.Default.LogMode(logger.Info),
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to connect to GORM DB: %v", err)
+        }</span>
+
+        // Configure connection pool
+        <span class="cov0" title="0">sqlDB, err := db.DB()
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatalf("failed to get DB from GORM: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">sqlDB.SetMaxIdleConns(10)
+        sqlDB.SetMaxOpenConns(100)
+        sqlDB.SetConnMaxLifetime(5 * time.Minute)
+
+        fmt.Println("✅ GORM DB connected successfully")
+        return db, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package handlers
+
+import (
+        "errors"
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/constants"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/models"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/token"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/utils"
+)
+
+func (server *Server) CreateUser(ctx *gin.Context) <span class="cov8" title="1">{
+        var req models.CreateUserRequest
+        if err := ctx.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov8" title="1">hashedPassword, err := utils.HashPassword(req.Password)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov8" title="1">user := models.User{
+                Username:       req.Username,
+                HashedPassword: hashedPassword,
+                FullName:       req.FullName,
+                Email:          req.Email,
+        }
+
+        usr, err := server.Repo.CreateUser(user)
+        if err != nil </span><span class="cov8" title="1">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov8" title="1">userDto := models.ConvertToUserDto(usr)
+
+        ctx.JSON(http.StatusOK, userDto)</span>
+}
+
+func (server *Server) GetUser(ctx *gin.Context) <span class="cov8" title="1">{
+        var req models.GetUserRequest
+        if err := ctx.ShouldBindUri(&amp;req); err != nil </span><span class="cov8" title="1">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov8" title="1">user, err := server.Repo.GetUser(req.Username)
+        if err != nil </span><span class="cov8" title="1">{
+                if err.Error() == "user not found" </span><span class="cov8" title="1">{
+                        ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+                        return
+                }</span>
+                <span class="cov8" title="1">ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return</span>
+        }
+
+        <span class="cov8" title="1">userDto := models.ConvertToUserDto(user)
+
+        ctx.JSON(http.StatusOK, userDto)</span>
+}
+
+func (server *Server) Login(ctx *gin.Context) <span class="cov8" title="1">{
+        var req models.LoginRequest
+        if err := ctx.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov8" title="1">userData, err := server.Repo.GetUser(req.Username)
+        if err != nil </span><span class="cov8" title="1">{
+                if err.Error() == "user not found" </span><span class="cov8" title="1">{
+                        ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+                        return
+                }</span>
+                <span class="cov0" title="0">ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return</span>
+        }
+
+        <span class="cov8" title="1">err = utils.CheckPassword(req.Password, userData.HashedPassword)
+        if err != nil </span><span class="cov8" title="1">{
+                ctx.JSON(http.StatusUnauthorized, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov8" title="1">token, err := server.TokenMaker.CreateToken(req.Username, server.Config.TokenDuration)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov8" title="1">user := models.ConvertToUserDto(userData)
+
+        response := models.LoginResponse{
+                User:  user,
+                Token: token,
+        }
+
+        ctx.JSON(http.StatusOK, response)</span>
+}
+
+func (server *Server) DeleteUser(ctx *gin.Context) <span class="cov0" title="0">{
+        var req models.GetUserRequest
+        if err := ctx.ShouldBindUri(&amp;req); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
+
+        if authPayload.Username != req.Username </span><span class="cov0" title="0">{
+                err := errors.New("cannot delete other users")
+                ctx.JSON(http.StatusUnauthorized, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">err := server.Repo.DeleteUser(req.Username)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">ctx.JSON(http.StatusOK, "OK")</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package middleware
+
+import (
+        "errors"
+        "net/http"
+        "strings"
+
+        "github.com/gin-gonic/gin"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/constants"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/token"
+)
+
+func AuthMiddleware(tokenMaker token.Maker) gin.HandlerFunc <span class="cov8" title="1">{
+        return func(ctx *gin.Context) </span><span class="cov8" title="1">{
+                authorizationHeader := ctx.GetHeader(constants.AUTHORIZATION_HEADER_KEY)
+                if len(authorizationHeader) == 0 </span><span class="cov8" title="1">{
+                        err := errors.New("authorization header is missing")
+                        ctx.AbortWithStatusJSON(http.StatusUnauthorized, constants.ErrorResponse(err))
+                        return
+                }</span>
+
+                <span class="cov8" title="1">fields := strings.Fields(authorizationHeader)
+                if len(fields) &lt; 2 </span><span class="cov0" title="0">{
+                        err := errors.New("invalid authorization header format")
+                        ctx.AbortWithStatusJSON(http.StatusUnauthorized, constants.ErrorResponse(err))
+                        return
+                }</span>
+
+                <span class="cov8" title="1">authorizationType := strings.ToLower(fields[0])
+                if authorizationType != constants.AUTHORIZATION_TYPE_BEARER </span><span class="cov8" title="1">{
+                        err := errors.New("invalid authorization type")
+                        ctx.AbortWithStatusJSON(http.StatusUnauthorized, constants.ErrorResponse(err))
+                        return
+                }</span>
+
+                <span class="cov8" title="1">accessToken := fields[1]
+
+                payload, err := tokenMaker.VerifyToken(accessToken)
+
+                if err != nil </span><span class="cov8" title="1">{
+                        ctx.AbortWithStatusJSON(http.StatusUnauthorized, constants.ErrorResponse(err))
+                        return
+                }</span>
+
+                <span class="cov8" title="1">ctx.Set(constants.AUTHORIZATION_PAYLOAD_KEY, payload)
+                ctx.Next()</span>
+        }
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

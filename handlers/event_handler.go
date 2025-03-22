@@ -79,3 +79,51 @@ func (server *Server) GetEvent(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, event)
 }
+
+func (server *Server) ExecuteAPIEvent(ctx *gin.Context) {
+	var req models.GetEventRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
+	}
+
+	event, err := server.Repo.GetEvent(req.ID)
+	if err != nil {
+		if err.Error() == "event not found" {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+		return
+	}
+
+	if event.Type != "API" {
+		err := errors.New("cannot excute events other than API")
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
+	}
+
+	err = server.Repo.ExecuteEvent(event.ID, "SUCCESS")
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, "OK")
+}
+
+func (server *Server) DeleteEvent(ctx *gin.Context) {
+	var req models.GetEventRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
+	}
+
+	err := server.Repo.DeleteEvent(int64(req.ID))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, "OK")
+}

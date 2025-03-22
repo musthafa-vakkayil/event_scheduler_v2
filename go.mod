@@ -4,7 +4,6 @@ go 1.24.1
 
 require (
 	github.com/aead/chacha20poly1305 v0.0.0-20170617001512-233f39982aeb
-	github.com/go-playground/assert/v2 v2.2.0
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.25.12
 )

@@ -12,5 +12,12 @@ mock:
 	mockery --dir=repo --name=Repository --output=mocks --case=underscore
 run:
 	go run main.go
+test:
+	go test -v ./handlers \
+		./middleware \
+		-coverprofile event_scheduler.out \
+        && go tool cover -html=event_scheduler.out -o event_scheduler.html
+build:
+	go build .
 
-.PHONY: postgres createdb dropdb migrate-up migrate-down run mock
+.PHONY: postgres createdb dropdb migrate-up migrate-down run mock test build
