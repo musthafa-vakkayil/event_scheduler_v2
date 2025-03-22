@@ -24,16 +24,13 @@ type Server struct {
 }
 
 // NewServer creates a new HTTP server and setup routing
-func NewServer(config config.Config, gormDB *gorm.DB) (*Server, error) {
+func NewServer(config config.Config, repo repo.Repository) (*Server, error) {
 	maker, err := token.NewJWTMaker(config.JWTSecretKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable create token maker %w", err)
 	}
 
-	// Initialize repository
-	repository := repo.NewRepository(gormDB)
-
-	server := &Server{TokenMaker: maker, Config: config, Repo: repository}
+	server := &Server{TokenMaker: maker, Config: config, Repo: repo}
 
 	server.SetupRoutes()
 
@@ -41,7 +38,8 @@ func NewServer(config config.Config, gormDB *gorm.DB) (*Server, error) {
 }
 
 func (server *Server) SetupRoutes() {
-	router := gin.Default()
+	server.Router = gin.Default()
+	router := server.Router
 
 	router.POST("/login", server.Login)
 	router.POST("/users", server.CreateUser)
@@ -49,12 +47,9 @@ func (server *Server) SetupRoutes() {
 	authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.TokenMaker))
 
 	authRoutes.GET("/users/:username", server.GetUser)
-	authRoutes.DELETE("/users/:username", server.DeleteUser)
 	authRoutes.POST("/events", server.CreateEvent)
 	authRoutes.GET("/events", server.ListEvents)
 	authRoutes.GET("/events/:id", server.GetEvent)
-
-	server.Router = router
 }
 
 // Start runs the HTTP server on a specific address
@@ -77,7 +72,7 @@ func ConnectGORM(cfg config.Config) (*gorm.DB, error) {
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to GORM DB: %w", err)
+		return nil, fmt.Errorf("failed to connect to GORM DB: %v", err)
 	}
 
 	// Configure connection pool

@@ -40,12 +40,8 @@ func (server *Server) CreateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, userDto)
 }
 
-type getUserRequest struct {
-	Username string `uri:"username" binding:"required,alphanum"`
-}
-
 func (server *Server) GetUser(ctx *gin.Context) {
-	var req getUserRequest
+	var req models.GetUserRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return
@@ -66,18 +62,8 @@ func (server *Server) GetUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, userDto)
 }
 
-type loginRequest struct {
-	Username string `json:"username" binding:"required,alphanum"`
-	Password string `json:"password" binding:"required,min=6"`
-}
-
-type loginResponse struct {
-	User  models.UserDto `json:"user"`
-	Token string         `json:"token"`
-}
-
 func (server *Server) Login(ctx *gin.Context) {
-	var req loginRequest
+	var req models.LoginRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return
@@ -107,29 +93,10 @@ func (server *Server) Login(ctx *gin.Context) {
 
 	user := models.ConvertToUserDto(userData)
 
-	response := loginResponse{
+	response := models.LoginResponse{
 		User:  user,
 		Token: token,
 	}
 
 	ctx.JSON(http.StatusOK, response)
-}
-
-type DeleteUserRequest struct {
-	Username string `uri:"username" binding:"required,alphanum"`
-}
-
-func (server *Server) DeleteUser(ctx *gin.Context) {
-	var req getUserRequest
-	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
-		return
-	}
-
-	if err := server.Repo.DeleteUser(req.Username); err != nil {
-		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
-		return
-	}
-
-	ctx.JSON(http.StatusOK, "OK")
 }

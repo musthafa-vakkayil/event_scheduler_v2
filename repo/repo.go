@@ -20,6 +20,6 @@ type Repo struct {
 }
 
 // NewRepository initializes and returns a Repository instance
-func NewRepository(db *gorm.DB) *Repo {
+func NewRepository(db *gorm.DB) Repository {
 	return &Repo{DB: db}
 }

@@ -8,19 +8,10 @@ import (
 	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
-	"gorm.io/datatypes"
 )
 
-type CreateEventRequest struct {
-	Name        string         `json:"name" binding:"required"`
-	Type        string         `json:"type" binding:"required,oneof=API"`
-	ApiEndpoint string         `json:"api_endpoint" binding:"required"`
-	ApiMethod   string         `json:"api_method" binding:"required,oneof=GET POST PUT PATCH DELETE"`
-	ApiPayload  datatypes.JSON `json:"api_payload"`
-}
-
 func (server *Server) CreateEvent(ctx *gin.Context) {
-	var req CreateEventRequest
+	var req models.CreateEventRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return
@@ -53,14 +44,8 @@ func (server *Server) CreateEvent(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, event)
 }
 
-type ListEventsRequest struct {
-	PageNumber  int  `form:"pageNumber" binding:"required,min=1"`
-	PageSize    int  `form:"pageSize" binding:"required,min=1"`
-	CreatedByMe bool `form:"createdByMe"`
-}
-
 func (server *Server) ListEvents(ctx *gin.Context) {
-	var req ListEventsRequest
+	var req models.ListEventsRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return
@@ -75,12 +60,8 @@ func (server *Server) ListEvents(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, events)
 }
 
-type getEventRequest struct {
-	ID int `uri:"id" binding:"required"`
-}
-
 func (server *Server) GetEvent(ctx *gin.Context) {
-	var req getEventRequest
+	var req models.GetEventRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return

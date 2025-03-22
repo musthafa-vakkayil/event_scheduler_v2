@@ -38,3 +38,17 @@ func ConvertToUserDto(user User) UserDto {
 		PasswordChangedAt: user.PasswordChangedAt,
 	}
 }
+
+type GetUserRequest struct {
+	Username string `uri:"username" binding:"required,alphanum"`
+}
+
+type LoginRequest struct {
+	Username string `json:"username" binding:"required,alphanum"`
+	Password string `json:"password" binding:"required,min=6"`
+}
+
+type LoginResponse struct {
+	User  UserDto `json:"user"`
+	Token string  `json:"token"`
+}
