@@ -7,12 +7,17 @@ services:
       - POSTGRES_DB=event_scheduler
     ports:
       - "1234:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
   redis:
     image: redis:7.4.2-alpine
     ports:
       - "6000:6379"
     restart: always
     command: redis-server --appendonly yes
+
   api:
     build: 
       context: .
@@ -30,3 +35,6 @@ services:
       - redis
     entrypoint: ["/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh"]
     command: ["/app/main"]
+
+volumes:
+  postgres_data:
