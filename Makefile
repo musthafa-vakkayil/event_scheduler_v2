@@ -19,6 +19,7 @@ run:
 test:
 	go test -v ./handlers \
 		./middleware \
+		./cache \
 		-coverprofile event_scheduler.out \
         && go tool cover -html=event_scheduler.out -o event_scheduler.html
 build:

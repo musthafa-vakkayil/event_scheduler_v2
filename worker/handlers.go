@@ -25,11 +25,6 @@ func (w *Worker) ArchiveLogHandler(ctx context.Context, t *asynq.Task) error {
 	log.Printf("✅ Archiving log ID: %d", payload.LogID)
 
 	// Mark the log as archived in DB
-	// result := w.DB.Exec("UPDATE logs SET is_archived = true WHERE id = ?", payload.LogID)
-	// if result.Error != nil {
-	// 	return fmt.Errorf("failed to archive log %d: %v", payload.LogID, result.Error)
-	// }
-
 	err := w.Repo.MarkLogAsArchived(payload.LogID)
 	if err != nil {
 		return fmt.Errorf("failed to archive log %d: %v", payload.LogID, err)
@@ -64,11 +59,6 @@ func (w *Worker) DeleteLogHandler(ctx context.Context, t *asynq.Task) error {
 	log.Printf("✅ Deleting log ID: %d", payload.LogID)
 
 	// Delete the log from the DB
-	// result := w.DB.Exec("DELETE FROM logs WHERE id = ?", payload.LogID)
-	// if result.Error != nil {
-	// 	return fmt.Errorf("failed to delete log %d: %v", payload.LogID, result.Error)
-	// }
-
 	err := w.Repo.DeleteLog(payload.LogID)
 	if err != nil {
 		return fmt.Errorf("failed to delete log %d: %v", payload.LogID, err)

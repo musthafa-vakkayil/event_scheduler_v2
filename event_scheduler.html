@@ -3,7 +3,7 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-		<title>handlers: Go Coverage Report</title>
+		<title>cache: Go Coverage Report</title>
 		<style>
 			body {
 				background: black;
@@ -55,17 +55,21 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/event_handler.go (0.0%)</option>
+				<option value="file0">github.com/musthafa-vakkayil/event_scheduler_v2/cache/cache.go (100.0%)</option>
 				
-				<option value="file1">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/log_handler.go (0.0%)</option>
+				<option value="file1">github.com/musthafa-vakkayil/event_scheduler_v2/cache/logs.go (78.1%)</option>
 				
-				<option value="file2">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/server.go (60.0%)</option>
+				<option value="file2">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/event_handler.go (0.0%)</option>
 				
-				<option value="file3">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/token_handler.go (0.0%)</option>
+				<option value="file3">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/log_handler.go (100.0%)</option>
 				
-				<option value="file4">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/user_handler.go (67.1%)</option>
+				<option value="file4">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/server.go (60.0%)</option>
 				
-				<option value="file5">github.com/musthafa-vakkayil/event_scheduler_v2/middleware/middleware.go (87.0%)</option>
+				<option value="file5">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/token_handler.go (0.0%)</option>
+				
+				<option value="file6">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/user_handler.go (67.1%)</option>
+				
+				<option value="file7">github.com/musthafa-vakkayil/event_scheduler_v2/middleware/middleware.go (87.0%)</option>
 				
 				</select>
 			</div>
@@ -79,7 +83,104 @@
 		</div>
 		<div id="content">
 		
-		<pre class="file" id="file0" style="display: none">package handlers
+		<pre class="file" id="file0" style="display: none">package cache
+
+import (
+        "context"
+        "time"
+
+        "github.com/go-redis/redis/v8"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/models"
+)
+
+type Cache interface {
+        Get(ctx context.Context, archived bool, active bool, page int, size int) ([]models.LogsResponse, error)
+        Set(ctx context.Context, logs []models.LogsResponse, archived bool, active bool, page int, size int, expiry time.Duration) error
+        DeletePattern(ctx context.Context, pattern string) error
+}
+
+func NewRedisCache(rdb *redis.Client) Cache <span class="cov8" title="1">{
+        return &amp;LogStore{
+                rdb: rdb,
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package cache
+
+import (
+        "context"
+        "encoding/json"
+        "fmt"
+        "time"
+
+        "github.com/go-redis/redis/v8"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/models"
+)
+
+type LogStore struct {
+        rdb *redis.Client
+}
+
+func (s *LogStore) Get(ctx context.Context, archived bool, active bool, page int, size int) ([]models.LogsResponse, error) <span class="cov8" title="1">{
+        const cachePrefix = "event-scheduler"
+        cacheKey := fmt.Sprintf("%s:log-%v-%v-%d-%d", cachePrefix, archived, active, page, size)
+
+        data, err := s.rdb.Get(ctx, cacheKey).Result()
+        if err == redis.Nil </span><span class="cov8" title="1">{
+                return nil, nil // Cache miss, return nil without error
+        }</span> else<span class="cov8" title="1"> if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("redis GET error: %w", err)
+        }</span>
+
+        // Skip unmarshalling if empty string (safe guard)
+        <span class="cov8" title="1">if data == "" </span><span class="cov0" title="0">{
+                return nil, nil
+        }</span>
+
+        <span class="cov8" title="1">var logs []models.LogsResponse
+        err = json.Unmarshal([]byte(data), &amp;logs)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to unmarshal logs: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">return logs, nil</span>
+}
+
+func (s *LogStore) Set(ctx context.Context, logs []models.LogsResponse, archived bool, active bool, page int, size int, expiry time.Duration) error <span class="cov8" title="1">{
+        const cachePrefix = "event-scheduler"
+        cacheKey := fmt.Sprintf("%s:log-%v-%v-%d-%d", cachePrefix, archived, active, page, size)
+
+        jsonData, err := json.Marshal(logs)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to marshal logs: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">pipe := s.rdb.TxPipeline()
+        pipe.SetEX(ctx, cacheKey, jsonData, expiry)
+        _, err = pipe.Exec(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to set cache: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (s *LogStore) DeletePattern(ctx context.Context, pattern string) error <span class="cov8" title="1">{
+        iter := s.rdb.Scan(ctx, 0, pattern, 0).Iterator()
+        for iter.Next(ctx) </span><span class="cov8" title="1">{
+                if err := s.rdb.Del(ctx, iter.Val()).Err(); err != nil </span><span class="cov0" title="0">{
+                        return fmt.Errorf("failed to delete cache: %w", err)
+                }</span>
+        }
+        <span class="cov8" title="1">if err := iter.Err(); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("redis scan error: %w", err)
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package handlers
 
 import (
         "errors"
@@ -229,7 +330,7 @@ func (server *Server) DeleteEvent(ctx *gin.Context) <span class="cov0" title="0"
 }
 </pre>
 		
-		<pre class="file" id="file1" style="display: none">package handlers
+		<pre class="file" id="file3" style="display: none">package handlers
 
 import (
         "log"
@@ -240,41 +341,41 @@ import (
         "github.com/musthafa-vakkayil/event_scheduler_v2/models"
 )
 
-func (server *Server) ListLogs(ctx *gin.Context) <span class="cov0" title="0">{
+func (server *Server) ListLogs(ctx *gin.Context) <span class="cov8" title="1">{
         var req models.ListLogsRequest
-        if err := ctx.ShouldBindQuery(&amp;req); err != nil </span><span class="cov0" title="0">{
+        if err := ctx.ShouldBindQuery(&amp;req); err != nil </span><span class="cov8" title="1">{
                 ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
                 return
         }</span>
 
         // Try to get data from cache first
-        <span class="cov0" title="0">logs, err := server.Cache.Get(ctx, req.OnlyArchived, req.OnlyActive, req.PageNumber, req.PageSize)
-        if err != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">logs, err := server.Cache.Get(ctx, req.OnlyArchived, req.OnlyActive, req.PageNumber, req.PageSize)
+        if err != nil </span><span class="cov8" title="1">{
                 log.Println("❌ Redis cache error, falling back to DB:", err)
         }</span>
 
-        <span class="cov0" title="0">if logs != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if logs != nil </span><span class="cov8" title="1">{
                 log.Println("✅ Cache hit")
                 ctx.JSON(http.StatusOK, logs)
                 return
         }</span>
 
-        <span class="cov0" title="0">log.Println("❌ Cache miss. Fetching from DB...")
+        <span class="cov8" title="1">log.Println("❌ Cache miss. Fetching from DB...")
 
         logs, err = server.Repo.ListLogs(req.OnlyActive, req.OnlyArchived, req.PageSize, (req.PageNumber-1)*req.PageSize)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
                 return
         }</span>
 
         // Set the result in cache
-        <span class="cov0" title="0">_ = server.Cache.Set(ctx, logs, req.OnlyArchived, req.OnlyActive, req.PageNumber, req.PageSize, server.Config.CacheExpiration)
+        <span class="cov8" title="1">_ = server.Cache.Set(ctx, logs, req.OnlyArchived, req.OnlyActive, req.PageNumber, req.PageSize, server.Config.CacheExpiration)
 
         ctx.JSON(http.StatusOK, logs)</span>
 }
 </pre>
 		
-		<pre class="file" id="file2" style="display: none">package handlers
+		<pre class="file" id="file4" style="display: none">package handlers
 
 import (
         "fmt"
@@ -398,7 +499,7 @@ func ConnectGORM(cfg config.Config) (*gorm.DB, error) <span class="cov0" title="
 }
 </pre>
 		
-		<pre class="file" id="file3" style="display: none">package handlers
+		<pre class="file" id="file5" style="display: none">package handlers
 
 import (
         "errors"
@@ -468,7 +569,7 @@ func (server *Server) RenewAccessToken(ctx *gin.Context) <span class="cov0" titl
 }
 </pre>
 		
-		<pre class="file" id="file4" style="display: none">package handlers
+		<pre class="file" id="file6" style="display: none">package handlers
 
 import (
         "errors"
@@ -668,7 +769,7 @@ func (server *Server) DeleteUser(ctx *gin.Context) <span class="cov0" title="0">
 }
 </pre>
 		
-		<pre class="file" id="file5" style="display: none">package middleware
+		<pre class="file" id="file7" style="display: none">package middleware
 
 import (
         "errors"
