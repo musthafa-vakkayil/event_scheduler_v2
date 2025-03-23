@@ -30,19 +30,24 @@ func NewPasetoMaker(symmetrickEy string) (Maker, error) {
 }
 
 // CreateToken creates a new token for a specific username and duration
-func (maker PasetoMaker) CreateToken(username string, duration time.Duration) (string, error) {
+func (maker PasetoMaker) CreateToken(username string, duration time.Duration) (string, *Payload, error) {
 	now := time.Now()
 	exp := now.Add(duration)
 
+	payload, err := Newpayload(username, duration)
+	if err != nil {
+		return "", nil, err
+	}
 	jsonToken := paseto.JSONToken{
 		Subject:    username,
 		IssuedAt:   now,
 		Expiration: exp,
 	}
+	jsonToken.Set("id", payload.ID.String())
 
-	jsonToken.Set("id", uuid.NewString())
+	token, err := paseto.NewV2().Encrypt(maker.symmetricKey, jsonToken, nil)
 
-	return paseto.NewV2().Encrypt(maker.symmetricKey, jsonToken, nil)
+	return token, payload, err
 }
 
 // VerifyToken checks if a token is valid or not

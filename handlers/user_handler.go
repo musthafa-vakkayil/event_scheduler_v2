@@ -87,7 +87,29 @@ func (server *Server) Login(ctx *gin.Context) {
 		return
 	}
 
-	token, err := server.TokenMaker.CreateToken(req.Username, server.Config.TokenDuration)
+	token, accessPayload, err := server.TokenMaker.CreateToken(req.Username, server.Config.TokenDuration)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+		return
+	}
+
+	refreshToken, refreshPayload, err := server.TokenMaker.CreateToken(req.Username, server.Config.RefreshTokenDuration)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+		return
+	}
+
+	args := models.Session{
+		ID:           refreshPayload.ID,
+		Username:     req.Username,
+		RefreshToken: refreshToken,
+		UserAgent:    ctx.Request.UserAgent(),
+		ClientIP:     ctx.ClientIP(),
+		ExpiresAt:    refreshPayload.ExpiresAt.Time,
+		IsBlocked:    false,
+	}
+
+	session, err := server.Repo.CreateSession(args)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
@@ -96,8 +118,12 @@ func (server *Server) Login(ctx *gin.Context) {
 	user := models.ConvertToUserDto(userData)
 
 	response := models.LoginResponse{
-		User:  user,
-		Token: token,
+		SessionId:             session.ID,
+		AccessToken:           token,
+		AccessTokenExpiresAt:  accessPayload.ExpiresAt.Time,
+		RefreshToken:          refreshToken,
+		RefreshTokenExpiresAt: refreshPayload.ExpiresAt.Time,
+		User:                  user,
 	}
 
 	ctx.JSON(http.StatusOK, response)

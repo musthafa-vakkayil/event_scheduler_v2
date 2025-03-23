@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"github.com/google/uuid"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
 	"gorm.io/gorm"
 )
@@ -15,6 +16,8 @@ type Repository interface {
 	DeleteEvent(eventID int64) error
 	DeleteUser(username string) error
 	ListLogs(onlyActive bool, onlyArchived bool, limit int, offset int) ([]models.LogsResponse, error)
+	CreateSession(session models.Session) (models.Session, error)
+	GetSession(id uuid.UUID) (models.Session, error)
 }
 
 // Repository struct holds the GORM database instance

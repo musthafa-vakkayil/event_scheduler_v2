@@ -90,8 +90,9 @@ func TestCreateUser(t *testing.T) {
 func TestGetUser(t *testing.T) {
 	mockRepo := mocks.NewRepository(t)
 	server := SetupTestServer(t, mockRepo)
-	token, err := server.TokenMaker.CreateToken("admin", server.Config.TokenDuration)
+	token, payload, err := server.TokenMaker.CreateToken("admin", server.Config.TokenDuration)
 	assert.NoError(t, err)
+	assert.NotEmpty(t, payload)
 	authToken := fmt.Sprintf("%v %v", constants.AUTHORIZATION_TYPE_BEARER, token)
 
 	t.Run("Success", func(t *testing.T) {
@@ -178,6 +179,8 @@ func TestLogin(t *testing.T) {
 			FullName:       utils.RandomString(6),
 			Email:          utils.RandomEmail(),
 		}, nil).Once()
+
+		mockRepo.On("CreateSession", mock.Anything).Return(models.Session{}, nil)
 
 		body, _ := json.Marshal(reqBody)
 		req, _ := http.NewRequest("POST", "/login", bytes.NewBuffer(body))
