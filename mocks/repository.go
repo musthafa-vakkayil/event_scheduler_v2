@@ -116,6 +116,24 @@ func (_m *Repository) DeleteEvent(eventID int64) error {
 	return r0
 }
 
+// DeleteLog provides a mock function with given fields: logID
+func (_m *Repository) DeleteLog(logID int) error {
+	ret := _m.Called(logID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteLog")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int) error); ok {
+		r0 = rf(logID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteUser provides a mock function with given fields: username
 func (_m *Repository) DeleteUser(username string) error {
 	ret := _m.Called(username)
@@ -135,21 +153,31 @@ func (_m *Repository) DeleteUser(username string) error {
 }
 
 // ExecuteEvent provides a mock function with given fields: eventID, status
-func (_m *Repository) ExecuteEvent(eventID int64, status string) error {
+func (_m *Repository) ExecuteEvent(eventID int64, status string) (int64, error) {
 	ret := _m.Called(eventID, status)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ExecuteEvent")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(int64, string) error); ok {
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int64, string) (int64, error)); ok {
+		return rf(eventID, status)
+	}
+	if rf, ok := ret.Get(0).(func(int64, string) int64); ok {
 		r0 = rf(eventID, status)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(int64)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(int64, string) error); ok {
+		r1 = rf(eventID, status)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetEvent provides a mock function with given fields: id
@@ -294,6 +322,24 @@ func (_m *Repository) ListLogs(onlyActive bool, onlyArchived bool, limit int, of
 	}
 
 	return r0, r1
+}
+
+// MarkLogAsArchived provides a mock function with given fields: logID
+func (_m *Repository) MarkLogAsArchived(logID int) error {
+	ret := _m.Called(logID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkLogAsArchived")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int) error); ok {
+		r0 = rf(logID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // NewRepository creates a new instance of Repository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

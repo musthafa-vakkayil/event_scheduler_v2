@@ -23,5 +23,7 @@ build:
 	go build .
 db-docs:
 	dbdocs build ./docs/database.dbml --project event_scheduler
+doc:
+	swag init
 
-.PHONY: postgres createdb dropdb migrate-up migrate-down run mock test build db-docs
+.PHONY: postgres createdb dropdb migrate-up migrate-down run mock test build db-docs doc

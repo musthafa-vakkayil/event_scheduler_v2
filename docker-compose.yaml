@@ -7,6 +7,12 @@ services:
       - POSTGRES_DB=event_scheduler
     ports:
       - "1234:5432"
+  redis:
+    image: redis:7.4.2-alpine
+    ports:
+      - "6000:6379"
+    restart: always
+    command: redis-server --appendonly yes
   api:
     build: 
       context: .
@@ -18,7 +24,9 @@ services:
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=event_scheduler
+      - REDIS_URL=redis:6379
     depends_on:
       - postgres
+      - redis
     entrypoint: ["/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh"]
     command: ["/app/main"]

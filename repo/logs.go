@@ -25,3 +25,11 @@ func (r *Repo) ListLogs(onlyActive bool, onlyArchived bool, limit int, offset in
 
 	return logs, nil
 }
+
+func (r *Repo) MarkLogAsArchived(logID int) error {
+	return r.DB.Model(&models.Log{}).Where("id = ?", logID).Update("is_archived", true).Error
+}
+
+func (r *Repo) DeleteLog(logID int) error {
+	return r.DB.Delete(&models.Log{}, logID).Error
+}

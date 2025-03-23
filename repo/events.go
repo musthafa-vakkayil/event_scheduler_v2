@@ -45,16 +45,16 @@ func (r *Repo) ListEvents(limit, offset int) ([]models.Event, error) {
 	return events, nil
 }
 
-func (r *Repo) ExecuteEvent(eventID int64, status string) error {
+func (r *Repo) ExecuteEvent(eventID int64, status string) (int64, error) {
 	tx := r.DB.Begin()
 	if tx.Error != nil {
-		return tx.Error
+		return 0, tx.Error
 	}
 
 	// Update executed_at in events table
 	if err := tx.Model(&models.Event{}).Where("id = ?", eventID).Update("executed_at", time.Now()).Error; err != nil {
 		tx.Rollback()
-		return err
+		return 0, err
 	}
 
 	// Create log entry
@@ -67,10 +67,10 @@ func (r *Repo) ExecuteEvent(eventID int64, status string) error {
 
 	if err := tx.Create(&log).Error; err != nil {
 		tx.Rollback()
-		return err
+		return 0, err
 	}
 
-	return tx.Commit().Error
+	return log.ID, tx.Commit().Error
 }
 
 func (r *Repo) DeleteEvent(eventID int64) error {

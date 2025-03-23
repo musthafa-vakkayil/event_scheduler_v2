@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/hibiken/asynq"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/config"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/middleware"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
@@ -23,10 +24,11 @@ import (
 
 // Server serves HTTP requests for our banking service
 type Server struct {
-	Config     config.Config
-	TokenMaker token.Maker
-	Router     *gin.Engine
-	Repo       repo.Repository
+	Config      config.Config
+	TokenMaker  token.Maker
+	Router      *gin.Engine
+	Repo        repo.Repository
+	RedisClient *asynq.Client
 }
 
 func NewServer(config config.Config, repo repo.Repository) (*Server, error) {

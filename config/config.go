@@ -18,6 +18,9 @@ type Config struct {
 	DBName               string        `mapstructure:"DB_NAME"`
 	DBPort               string        `mapstructure:"DB_PORT"`
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
+	LogArchiveDuration   time.Duration `mapstructure:"LOG_ARCHIVE_DURATION"`
+	LogDeleteDuration    time.Duration `mapstructure:"LOG_DELETE_DURATION"`
+	RedisUrl             string        `mapstructure:"REDIS_URL"`
 }
 
 // LoadConfig reads configuration from file or enviornment variable

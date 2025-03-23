@@ -3,9 +3,11 @@ package main
 import (
 	"log"
 
+	"github.com/hibiken/asynq"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/config"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/handlers"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/worker"
 )
 
 // @title Event Scheduler API
@@ -43,10 +45,19 @@ func main() {
 	// Initialize repository
 	repository := repo.NewRepository(gormDB)
 
+	// Create Redis client (shared by server and worker)
+	redisClient := asynq.NewClient(asynq.RedisClientOpt{Addr: cfg.RedisUrl})
+	defer redisClient.Close()
+
 	server, err := handlers.NewServer(cfg, repository)
 	if err != nil {
 		log.Fatal("cannot start server", err)
 	}
+
+	server.RedisClient = redisClient
+
+	// Start worker with shared Redis client and DB
+	worker.StartWorker(cfg.RedisUrl, redisClient, cfg, repository)
 
 	err = server.Start(cfg.ServerAddress)
 	if err != nil {

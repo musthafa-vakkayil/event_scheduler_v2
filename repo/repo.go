@@ -12,12 +12,14 @@ type Repository interface {
 	CreateEvent(event models.Event) (models.Event, error)
 	GetEvent(id int) (models.Event, error)
 	ListEvents(limit, offset int) ([]models.Event, error)
-	ExecuteEvent(eventID int64, status string) error
+	ExecuteEvent(eventID int64, status string) (int64, error)
 	DeleteEvent(eventID int64) error
 	DeleteUser(username string) error
 	ListLogs(onlyActive bool, onlyArchived bool, limit int, offset int) ([]models.LogsResponse, error)
 	CreateSession(session models.Session) (models.Session, error)
 	GetSession(id uuid.UUID) (models.Session, error)
+	MarkLogAsArchived(logID int) error
+	DeleteLog(logID int) error
 }
 
 // Repository struct holds the GORM database instance

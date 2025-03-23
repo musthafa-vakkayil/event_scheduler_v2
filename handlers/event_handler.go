@@ -2,11 +2,14 @@ package handlers
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hibiken/asynq"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/tasks"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
 )
 
@@ -103,10 +106,22 @@ func (server *Server) ExecuteAPIEvent(ctx *gin.Context) {
 		return
 	}
 
-	err = server.Repo.ExecuteEvent(event.ID, "SUCCESS")
+	logId, err := server.Repo.ExecuteEvent(event.ID, "SUCCESS")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
+	}
+
+	// Create an archive task
+	archiveTask, err := tasks.NewArchiveLogTask(int(logId))
+	if err != nil {
+		log.Fatal("Failed to create archive task:", err)
+	}
+
+	// Enqueue the archive task with a 2-minute delay (for testing)
+	_, err = server.RedisClient.Enqueue(archiveTask, asynq.Queue("low"), asynq.ProcessIn(server.Config.LogArchiveDuration))
+	if err != nil {
+		log.Fatal("Failed to enqueue archive task:", err)
 	}
 
 	ctx.JSON(http.StatusOK, "OK")

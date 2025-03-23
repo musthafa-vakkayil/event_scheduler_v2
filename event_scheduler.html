@@ -59,7 +59,7 @@
 				
 				<option value="file1">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/log_handler.go (0.0%)</option>
 				
-				<option value="file2">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/server.go (57.6%)</option>
+				<option value="file2">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/server.go (60.0%)</option>
 				
 				<option value="file3">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/token_handler.go (0.0%)</option>
 				
@@ -83,11 +83,14 @@
 
 import (
         "errors"
+        "log"
         "net/http"
 
         "github.com/gin-gonic/gin"
+        "github.com/hibiken/asynq"
         "github.com/musthafa-vakkayil/event_scheduler_v2/constants"
         "github.com/musthafa-vakkayil/event_scheduler_v2/models"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/tasks"
         "github.com/musthafa-vakkayil/event_scheduler_v2/token"
 )
 
@@ -184,10 +187,22 @@ func (server *Server) ExecuteAPIEvent(ctx *gin.Context) <span class="cov0" title
                 return
         }</span>
 
-        <span class="cov0" title="0">err = server.Repo.ExecuteEvent(event.ID, "SUCCESS")
+        <span class="cov0" title="0">logId, err := server.Repo.ExecuteEvent(event.ID, "SUCCESS")
         if err != nil </span><span class="cov0" title="0">{
                 ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
                 return
+        }</span>
+
+        // Create an archive task
+        <span class="cov0" title="0">archiveTask, err := tasks.NewArchiveLogTask(int(logId))
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to create archive task:", err)
+        }</span>
+
+        // Enqueue the archive task with a 2-minute delay (for testing)
+        <span class="cov0" title="0">_, err = server.RedisClient.Enqueue(archiveTask, asynq.Queue("low"), asynq.ProcessIn(server.Config.LogArchiveDuration))
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to enqueue archive task:", err)
         }</span>
 
         <span class="cov0" title="0">ctx.JSON(http.StatusOK, "OK")</span>
@@ -244,25 +259,32 @@ import (
         "log"
         "time"
 
+        "github.com/gin-contrib/cors"
         "github.com/gin-gonic/gin"
+        "github.com/hibiken/asynq"
         "github.com/musthafa-vakkayil/event_scheduler_v2/config"
         "github.com/musthafa-vakkayil/event_scheduler_v2/middleware"
         "github.com/musthafa-vakkayil/event_scheduler_v2/repo"
         "github.com/musthafa-vakkayil/event_scheduler_v2/token"
+        swaggerFiles "github.com/swaggo/files"
+        ginSwagger "github.com/swaggo/gin-swagger"
         "gorm.io/driver/postgres"
         "gorm.io/gorm"
         "gorm.io/gorm/logger"
+
+        // Swagger
+        _ "github.com/musthafa-vakkayil/event_scheduler_v2/docs"
 )
 
 // Server serves HTTP requests for our banking service
 type Server struct {
-        Config     config.Config
-        TokenMaker token.Maker
-        Router     *gin.Engine
-        Repo       repo.Repository
+        Config      config.Config
+        TokenMaker  token.Maker
+        Router      *gin.Engine
+        Repo        repo.Repository
+        RedisClient *asynq.Client
 }
 
-// NewServer creates a new HTTP server and setup routing
 func NewServer(config config.Config, repo repo.Repository) (*Server, error) <span class="cov8" title="1">{
         maker, err := token.NewJWTMaker(config.JWTSecretKey)
         if err != nil </span><span class="cov0" title="0">{
@@ -278,12 +300,28 @@ func NewServer(config config.Config, repo repo.Repository) (*Server, error) <spa
 
 func (server *Server) SetupRoutes() <span class="cov8" title="1">{
         server.Router = gin.Default()
+
+        // Swagger routes
+        server.Router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
         router := server.Router
 
+        // Enable CORS
+        router.Use(cors.New(cors.Config{
+                AllowOrigins:     []string{"*"}, // Allow all origins (or specify allowed domains)
+                AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+                AllowHeaders:     []string{"Origin", "Authorization", "Content-Type"},
+                ExposeHeaders:    []string{"Content-Length"},
+                AllowCredentials: true,
+                MaxAge:           12 * time.Hour,
+        }))
+
+        // Open routes
         router.POST("/login", server.Login)
         router.POST("/users", server.CreateUser)
         router.POST("/token/renew", server.RenewAccessToken)
 
+        // Authenticated routes with JWT
         authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.TokenMaker))
 
         authRoutes.GET("/users/:username", server.GetUser)
@@ -419,6 +457,16 @@ import (
         "github.com/musthafa-vakkayil/event_scheduler_v2/utils"
 )
 
+// @Summary Create a new user
+// @Description Create a new user with username, password, and email
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body models.CreateUserRequest true "User data"
+// @Success 200 {object} models.UserDto
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Router /users [post]
 func (server *Server) CreateUser(ctx *gin.Context) <span class="cov8" title="1">{
         var req models.CreateUserRequest
         if err := ctx.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
@@ -450,6 +498,18 @@ func (server *Server) CreateUser(ctx *gin.Context) <span class="cov8" title="1">
         ctx.JSON(http.StatusOK, userDto)</span>
 }
 
+// @Summary Get user by username
+// @Description Retrieve user details by username
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param username path string true "Username"
+// @Success 200 {object} models.UserDto
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 404 {object} models.NotFoundResponse
+// @Router /users/{username} [get]
+// @Security BearerAuth
 func (server *Server) GetUser(ctx *gin.Context) <span class="cov8" title="1">{
         var req models.GetUserRequest
         if err := ctx.ShouldBindUri(&amp;req); err != nil </span><span class="cov8" title="1">{
@@ -472,6 +532,17 @@ func (server *Server) GetUser(ctx *gin.Context) <span class="cov8" title="1">{
         ctx.JSON(http.StatusOK, userDto)</span>
 }
 
+// @Summary Login user
+// @Description Authenticate and get access/refresh tokens
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body models.LoginRequest true "Login credentials"
+// @Success 200 {object} models.LoginResponse
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 404 {object} models.NotFoundResponse
+// @Router /login [post]
 func (server *Server) Login(ctx *gin.Context) <span class="cov8" title="1">{
         var req models.LoginRequest
         if err := ctx.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
@@ -537,6 +608,17 @@ func (server *Server) Login(ctx *gin.Context) <span class="cov8" title="1">{
         ctx.JSON(http.StatusOK, response)</span>
 }
 
+// @Summary Delete user by username
+// @Description Remove a user by username
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param username path string true "Username"
+// @Success 200 {string} models.EmptyResponse
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Router /users/{username} [delete]
+// @Security BearerAuth
 func (server *Server) DeleteUser(ctx *gin.Context) <span class="cov0" title="0">{
         var req models.GetUserRequest
         if err := ctx.ShouldBindUri(&amp;req); err != nil </span><span class="cov0" title="0">{
