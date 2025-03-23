@@ -8,6 +8,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/hibiken/asynq"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/cache"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/config"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/middleware"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
@@ -28,16 +29,17 @@ type Server struct {
 	TokenMaker  token.Maker
 	Router      *gin.Engine
 	Repo        repo.Repository
-	RedisClient *asynq.Client
+	QueueClient *asynq.Client
+	Cache       cache.Cache
 }
 
-func NewServer(config config.Config, repo repo.Repository) (*Server, error) {
+func NewServer(config config.Config, repo repo.Repository, cache cache.Cache, queueClient *asynq.Client) (*Server, error) {
 	maker, err := token.NewJWTMaker(config.JWTSecretKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable create token maker %w", err)
 	}
 
-	server := &Server{TokenMaker: maker, Config: config, Repo: repo}
+	server := &Server{TokenMaker: maker, Config: config, Repo: repo, Cache: cache, QueueClient: queueClient}
 
 	server.SetupRoutes()
 

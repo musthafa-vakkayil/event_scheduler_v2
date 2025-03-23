@@ -21,6 +21,7 @@ type Config struct {
 	LogArchiveDuration   time.Duration `mapstructure:"LOG_ARCHIVE_DURATION"`
 	LogDeleteDuration    time.Duration `mapstructure:"LOG_DELETE_DURATION"`
 	RedisUrl             string        `mapstructure:"REDIS_URL"`
+	CacheExpiration      time.Duration `mapstructure:"CACHE_EXPIRY_DURATION"`
 }
 
 // LoadConfig reads configuration from file or enviornment variable

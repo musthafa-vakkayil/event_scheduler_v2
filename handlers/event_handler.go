@@ -119,10 +119,14 @@ func (server *Server) ExecuteAPIEvent(ctx *gin.Context) {
 	}
 
 	// Enqueue the archive task with a 2-minute delay (for testing)
-	_, err = server.RedisClient.Enqueue(archiveTask, asynq.Queue("low"), asynq.ProcessIn(server.Config.LogArchiveDuration))
+	_, err = server.QueueClient.Enqueue(archiveTask, asynq.Queue("low"), asynq.ProcessIn(server.Config.LogArchiveDuration))
 	if err != nil {
 		log.Fatal("Failed to enqueue archive task:", err)
 	}
+
+	// Invalidate cache
+	cacheKey := "event-scheduler:log-*"       // Wildcard pattern
+	server.Cache.DeletePattern(ctx, cacheKey) // New cache invalidation method
 
 	ctx.JSON(http.StatusOK, "OK")
 }

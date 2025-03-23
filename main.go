@@ -2,12 +2,17 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/hibiken/asynq"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/cache"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/config"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/handlers"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
-	"github.com/musthafa-vakkayil/event_scheduler_v2/worker"
 )
 
 // @title Event Scheduler API
@@ -36,31 +41,43 @@ func main() {
 		log.Fatal("unable to read config", err)
 	}
 
-	// Initialize GORM DB
 	gormDB, err := handlers.ConnectGORM(cfg)
 	if err != nil {
-		log.Fatal("unable to connect to GORM DB: %w", err)
+		log.Fatal("unable to connect to GORM DB:", err)
 	}
 
-	// Initialize repository
 	repository := repo.NewRepository(gormDB)
 
-	// Create Redis client (shared by server and worker)
-	redisClient := asynq.NewClient(asynq.RedisClientOpt{Addr: cfg.RedisUrl})
-	defer redisClient.Close()
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:         cfg.RedisUrl,
+		DB:           1,
+		PoolSize:     100,
+		MinIdleConns: 10,
+		IdleTimeout:  5 * time.Minute,
+	})
 
-	server, err := handlers.NewServer(cfg, repository)
+	queueClient := asynq.NewClient(asynq.RedisClientOpt{Addr: cfg.RedisUrl, DB: 0})
+
+	cacheInstance := cache.NewRedisCache(redisClient)
+
+	server, err := handlers.NewServer(cfg, repository, cacheInstance, queueClient)
 	if err != nil {
 		log.Fatal("cannot start server", err)
 	}
 
-	server.RedisClient = redisClient
+	go func() {
+		if err := server.Start(cfg.ServerAddress); err != nil {
+			log.Fatal("cannot start server:", err)
+		}
+	}()
 
-	// Start worker with shared Redis client and DB
-	worker.StartWorker(cfg.RedisUrl, redisClient, cfg, repository)
+	// Graceful shutdown handler
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
 
-	err = server.Start(cfg.ServerAddress)
-	if err != nil {
-		log.Fatal("cannot start server", err)
-	}
+	log.Println("Shutting down gracefully...")
+
+	redisClient.Close()
+	queueClient.Close()
 }
