@@ -8,6 +8,26 @@ import (
 	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
 )
 
+// @title Event Scheduler API
+// @version 1.0
+// @description This is an event scheduling service with JWT authentication
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name Musthafa
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /
+// @schemes http
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT token authorization format: "Bearer {token}"
 func main() {
 	cfg, err := config.LoadConfig(".")
 	if err != nil {

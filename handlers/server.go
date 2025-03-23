@@ -5,14 +5,20 @@ import (
 	"log"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/config"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/middleware"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	// Swagger
+	_ "github.com/musthafa-vakkayil/event_scheduler_v2/docs"
 )
 
 // Server serves HTTP requests for our banking service
@@ -23,7 +29,6 @@ type Server struct {
 	Repo       repo.Repository
 }
 
-// NewServer creates a new HTTP server and setup routing
 func NewServer(config config.Config, repo repo.Repository) (*Server, error) {
 	maker, err := token.NewJWTMaker(config.JWTSecretKey)
 	if err != nil {
@@ -39,12 +44,28 @@ func NewServer(config config.Config, repo repo.Repository) (*Server, error) {
 
 func (server *Server) SetupRoutes() {
 	server.Router = gin.Default()
+
+	// Swagger routes
+	server.Router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	router := server.Router
 
+	// Enable CORS
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"}, // Allow all origins (or specify allowed domains)
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Authorization", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
+	// Open routes
 	router.POST("/login", server.Login)
 	router.POST("/users", server.CreateUser)
 	router.POST("/token/renew", server.RenewAccessToken)
 
+	// Authenticated routes with JWT
 	authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.TokenMaker))
 
 	authRoutes.GET("/users/:username", server.GetUser)

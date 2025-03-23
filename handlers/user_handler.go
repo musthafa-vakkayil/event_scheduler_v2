@@ -11,6 +11,16 @@ import (
 	"github.com/musthafa-vakkayil/event_scheduler_v2/utils"
 )
 
+// @Summary Create a new user
+// @Description Create a new user with username, password, and email
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body models.CreateUserRequest true "User data"
+// @Success 200 {object} models.UserDto
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Router /users [post]
 func (server *Server) CreateUser(ctx *gin.Context) {
 	var req models.CreateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -42,6 +52,18 @@ func (server *Server) CreateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, userDto)
 }
 
+// @Summary Get user by username
+// @Description Retrieve user details by username
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param username path string true "Username"
+// @Success 200 {object} models.UserDto
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 404 {object} models.NotFoundResponse
+// @Router /users/{username} [get]
+// @Security BearerAuth
 func (server *Server) GetUser(ctx *gin.Context) {
 	var req models.GetUserRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -64,6 +86,17 @@ func (server *Server) GetUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, userDto)
 }
 
+// @Summary Login user
+// @Description Authenticate and get access/refresh tokens
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body models.LoginRequest true "Login credentials"
+// @Success 200 {object} models.LoginResponse
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 404 {object} models.NotFoundResponse
+// @Router /login [post]
 func (server *Server) Login(ctx *gin.Context) {
 	var req models.LoginRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -129,6 +162,17 @@ func (server *Server) Login(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
+// @Summary Delete user by username
+// @Description Remove a user by username
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param username path string true "Username"
+// @Success 200 {string} models.EmptyResponse
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Router /users/{username} [delete]
+// @Security BearerAuth
 func (server *Server) DeleteUser(ctx *gin.Context) {
 	var req models.GetUserRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {

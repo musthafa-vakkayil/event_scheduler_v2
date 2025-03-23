@@ -1,0 +1,232 @@
+basePath: /
+definitions:
+  models.BadRequestResponse:
+    description: Standard error response object
+    properties:
+      bad request:
+        type: string
+    type: object
+  models.CreateUserRequest:
+    description: CreateUserRequest object used for input
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    - username
+    type: object
+  models.LoginRequest:
+    description: LoginRequest object used for input
+    properties:
+      password:
+        minLength: 6
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  models.LoginResponse:
+    description: LoginResponse object used for output
+    properties:
+      access_token:
+        type: string
+      access_token_expiry:
+        type: string
+      refresh_token:
+        type: string
+      refresh_token_expiry:
+        type: string
+      session_id:
+        type: string
+      user:
+        $ref: '#/definitions/models.UserDto'
+    type: object
+  models.NotFoundResponse:
+    description: Standard error response object
+    properties:
+      not found:
+        type: string
+    type: object
+  models.UnauthorizedRequestResponse:
+    description: Standard error response object
+    properties:
+      unauthorized request:
+        type: string
+    type: object
+  models.UserDto:
+    description: UserDto object used for input
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      password_changed_at:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: Musthafa
+    url: http://www.swagger.io/support
+  description: This is an event scheduling service with JWT authentication
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Event Scheduler API
+  version: "1.0"
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate and get access/refresh tokens
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.BadRequestResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.UnauthorizedRequestResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.NotFoundResponse'
+      summary: Login user
+      tags:
+      - Auth
+  /users:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with username, password, and email
+      parameters:
+      - description: User data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.BadRequestResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.UnauthorizedRequestResponse'
+      summary: Create a new user
+      tags:
+      - Auth
+  /users/{username}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a user by username
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.BadRequestResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.UnauthorizedRequestResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete user by username
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      description: Retrieve user details by username
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.BadRequestResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.UnauthorizedRequestResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.NotFoundResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user by username
+      tags:
+      - Users
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: 'JWT token authorization format: "Bearer {token}"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
