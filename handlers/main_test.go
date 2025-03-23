@@ -12,13 +12,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func SetupTestServer(t *testing.T, mockRepo *mocks.Repository) *Server {
+func SetupTestServer(t *testing.T, mockRepo *mocks.Repository, mockCache *mocks.Cache) *Server {
 	config := config.Config{
 		TokenDuration: time.Minute,
 		JWTSecretKey:  utils.RandomString(32),
 	}
 
-	server, err := NewServer(config, mockRepo)
+	server, err := NewServer(config, mockRepo, mockCache)
 	assert.NoError(t, err)
 	return server
 }

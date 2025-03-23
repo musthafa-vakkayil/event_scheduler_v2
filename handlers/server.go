@@ -33,13 +33,13 @@ type Server struct {
 	Cache       cache.Cache
 }
 
-func NewServer(config config.Config, repo repo.Repository, cache cache.Cache, queueClient *asynq.Client) (*Server, error) {
+func NewServer(config config.Config, repo repo.Repository, cache cache.Cache) (*Server, error) {
 	maker, err := token.NewJWTMaker(config.JWTSecretKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable create token maker %w", err)
 	}
 
-	server := &Server{TokenMaker: maker, Config: config, Repo: repo, Cache: cache, QueueClient: queueClient}
+	server := &Server{TokenMaker: maker, Config: config, Repo: repo, Cache: cache}
 
 	server.SetupRoutes()
 

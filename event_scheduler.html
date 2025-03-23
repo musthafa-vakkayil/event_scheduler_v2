@@ -200,12 +200,16 @@ func (server *Server) ExecuteAPIEvent(ctx *gin.Context) <span class="cov0" title
         }</span>
 
         // Enqueue the archive task with a 2-minute delay (for testing)
-        <span class="cov0" title="0">_, err = server.RedisClient.Enqueue(archiveTask, asynq.Queue("low"), asynq.ProcessIn(server.Config.LogArchiveDuration))
+        <span class="cov0" title="0">_, err = server.QueueClient.Enqueue(archiveTask, asynq.Queue("low"), asynq.ProcessIn(server.Config.LogArchiveDuration))
         if err != nil </span><span class="cov0" title="0">{
                 log.Fatal("Failed to enqueue archive task:", err)
         }</span>
 
-        <span class="cov0" title="0">ctx.JSON(http.StatusOK, "OK")</span>
+        // Invalidate cache
+        <span class="cov0" title="0">cacheKey := "event-scheduler:log-*"       // Wildcard pattern
+        server.Cache.DeletePattern(ctx, cacheKey) // New cache invalidation method
+
+        ctx.JSON(http.StatusOK, "OK")</span>
 }
 
 func (server *Server) DeleteEvent(ctx *gin.Context) <span class="cov0" title="0">{
@@ -228,6 +232,7 @@ func (server *Server) DeleteEvent(ctx *gin.Context) <span class="cov0" title="0"
 		<pre class="file" id="file1" style="display: none">package handlers
 
 import (
+        "log"
         "net/http"
 
         "github.com/gin-gonic/gin"
@@ -242,13 +247,30 @@ func (server *Server) ListLogs(ctx *gin.Context) <span class="cov0" title="0">{
                 return
         }</span>
 
-        <span class="cov0" title="0">logs, err := server.Repo.ListLogs(req.OnlyActive, req.OnlyArchived, req.PageSize, (req.PageNumber-1)*req.PageSize)
+        // Try to get data from cache first
+        <span class="cov0" title="0">logs, err := server.Cache.Get(ctx, req.OnlyArchived, req.OnlyActive, req.PageNumber, req.PageSize)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Println("❌ Redis cache error, falling back to DB:", err)
+        }</span>
+
+        <span class="cov0" title="0">if logs != nil </span><span class="cov0" title="0">{
+                log.Println("✅ Cache hit")
+                ctx.JSON(http.StatusOK, logs)
+                return
+        }</span>
+
+        <span class="cov0" title="0">log.Println("❌ Cache miss. Fetching from DB...")
+
+        logs, err = server.Repo.ListLogs(req.OnlyActive, req.OnlyArchived, req.PageSize, (req.PageNumber-1)*req.PageSize)
         if err != nil </span><span class="cov0" title="0">{
                 ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
                 return
         }</span>
 
-        <span class="cov0" title="0">ctx.JSON(http.StatusOK, logs)</span>
+        // Set the result in cache
+        <span class="cov0" title="0">_ = server.Cache.Set(ctx, logs, req.OnlyArchived, req.OnlyActive, req.PageNumber, req.PageSize, server.Config.CacheExpiration)
+
+        ctx.JSON(http.StatusOK, logs)</span>
 }
 </pre>
 		
@@ -262,6 +284,7 @@ import (
         "github.com/gin-contrib/cors"
         "github.com/gin-gonic/gin"
         "github.com/hibiken/asynq"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/cache"
         "github.com/musthafa-vakkayil/event_scheduler_v2/config"
         "github.com/musthafa-vakkayil/event_scheduler_v2/middleware"
         "github.com/musthafa-vakkayil/event_scheduler_v2/repo"
@@ -282,16 +305,17 @@ type Server struct {
         TokenMaker  token.Maker
         Router      *gin.Engine
         Repo        repo.Repository
-        RedisClient *asynq.Client
+        QueueClient *asynq.Client
+        Cache       cache.Cache
 }
 
-func NewServer(config config.Config, repo repo.Repository) (*Server, error) <span class="cov8" title="1">{
+func NewServer(config config.Config, repo repo.Repository, cache cache.Cache) (*Server, error) <span class="cov8" title="1">{
         maker, err := token.NewJWTMaker(config.JWTSecretKey)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, fmt.Errorf("unable create token maker %w", err)
         }</span>
 
-        <span class="cov8" title="1">server := &amp;Server{TokenMaker: maker, Config: config, Repo: repo}
+        <span class="cov8" title="1">server := &amp;Server{TokenMaker: maker, Config: config, Repo: repo, Cache: cache}
 
         server.SetupRoutes()
 

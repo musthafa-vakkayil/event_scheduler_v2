@@ -11,7 +11,9 @@ migrate-up:
 migrate-down:
 	migrate -path migrations -database "$(DB_URL)" -verbose down
 mock:
-	mockery --dir=repo --name=Repository --output=mocks --case=underscore
+	mockery --dir=repo --name=Repository --output=mocks --case=underscore 
+	mockery --dir=cache --name=Cache --output=mocks --case=underscore
+
 run:
 	go run main.go
 test:

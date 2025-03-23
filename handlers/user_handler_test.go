@@ -19,7 +19,8 @@ import (
 
 func TestCreateUser(t *testing.T) {
 	mockRepo := mocks.NewRepository(t)
-	server := SetupTestServer(t, mockRepo)
+	mockCache := new(mocks.Cache)
+	server := SetupTestServer(t, mockRepo, mockCache)
 
 	t.Run("Success", func(t *testing.T) {
 		// Define expected user
@@ -89,7 +90,8 @@ func TestCreateUser(t *testing.T) {
 
 func TestGetUser(t *testing.T) {
 	mockRepo := mocks.NewRepository(t)
-	server := SetupTestServer(t, mockRepo)
+	mockCache := new(mocks.Cache)
+	server := SetupTestServer(t, mockRepo, mockCache)
 	token, payload, err := server.TokenMaker.CreateToken("admin", server.Config.TokenDuration)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, payload)
@@ -160,7 +162,8 @@ func TestGetUser(t *testing.T) {
 
 func TestLogin(t *testing.T) {
 	mockRepo := mocks.NewRepository(t)
-	server := SetupTestServer(t, mockRepo)
+	mockCache := new(mocks.Cache)
+	server := SetupTestServer(t, mockRepo, mockCache)
 
 	t.Run("Success", func(t *testing.T) {
 		// Define expected user

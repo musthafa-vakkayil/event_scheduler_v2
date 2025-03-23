@@ -60,10 +60,12 @@ func main() {
 
 	cacheInstance := cache.NewRedisCache(redisClient)
 
-	server, err := handlers.NewServer(cfg, repository, cacheInstance, queueClient)
+	server, err := handlers.NewServer(cfg, repository, cacheInstance)
 	if err != nil {
 		log.Fatal("cannot start server", err)
 	}
+
+	server.QueueClient = queueClient
 
 	go func() {
 		if err := server.Start(cfg.ServerAddress); err != nil {
