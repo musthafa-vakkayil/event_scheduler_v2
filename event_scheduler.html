@@ -57,11 +57,15 @@
 				
 				<option value="file0">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/event_handler.go (0.0%)</option>
 				
-				<option value="file1">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/server.go (54.8%)</option>
+				<option value="file1">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/log_handler.go (0.0%)</option>
 				
-				<option value="file2">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/user_handler.go (68.8%)</option>
+				<option value="file2">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/server.go (57.6%)</option>
 				
-				<option value="file3">github.com/musthafa-vakkayil/event_scheduler_v2/middleware/middleware.go (87.0%)</option>
+				<option value="file3">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/token_handler.go (0.0%)</option>
+				
+				<option value="file4">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/user_handler.go (67.1%)</option>
+				
+				<option value="file5">github.com/musthafa-vakkayil/event_scheduler_v2/middleware/middleware.go (87.0%)</option>
 				
 				</select>
 			</div>
@@ -167,7 +171,7 @@ func (server *Server) ExecuteAPIEvent(ctx *gin.Context) <span class="cov0" title
         <span class="cov0" title="0">event, err := server.Repo.GetEvent(req.ID)
         if err != nil </span><span class="cov0" title="0">{
                 if err.Error() == "event not found" </span><span class="cov0" title="0">{
-                        ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+                        ctx.JSON(http.StatusNotFound, gin.H{"error": "Event not found"})
                         return
                 }</span>
                 <span class="cov0" title="0">ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
@@ -207,6 +211,33 @@ func (server *Server) DeleteEvent(ctx *gin.Context) <span class="cov0" title="0"
 </pre>
 		
 		<pre class="file" id="file1" style="display: none">package handlers
+
+import (
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/constants"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/models"
+)
+
+func (server *Server) ListLogs(ctx *gin.Context) <span class="cov0" title="0">{
+        var req models.ListLogsRequest
+        if err := ctx.ShouldBindQuery(&amp;req); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">logs, err := server.Repo.ListLogs(req.OnlyActive, req.OnlyArchived, req.PageSize, (req.PageNumber-1)*req.PageSize)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">ctx.JSON(http.StatusOK, logs)</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package handlers
 
 import (
         "fmt"
@@ -251,16 +282,20 @@ func (server *Server) SetupRoutes() <span class="cov8" title="1">{
 
         router.POST("/login", server.Login)
         router.POST("/users", server.CreateUser)
+        router.POST("/token/renew", server.RenewAccessToken)
 
         authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.TokenMaker))
 
         authRoutes.GET("/users/:username", server.GetUser)
         authRoutes.DELETE("/users/:username", server.DeleteUser)
+
         authRoutes.POST("/events", server.CreateEvent)
         authRoutes.GET("/events", server.ListEvents)
         authRoutes.GET("/events/:id", server.GetEvent)
         authRoutes.GET("/events/:id/execute", server.ExecuteAPIEvent)
         authRoutes.DELETE("/events/:id", server.DeleteEvent)
+
+        authRoutes.GET("/logs", server.ListLogs)
 }</span>
 
 // Start runs the HTTP server on a specific address
@@ -301,7 +336,77 @@ func ConnectGORM(cfg config.Config) (*gorm.DB, error) <span class="cov0" title="
 }
 </pre>
 		
-		<pre class="file" id="file2" style="display: none">package handlers
+		<pre class="file" id="file3" style="display: none">package handlers
+
+import (
+        "errors"
+        "net/http"
+        "time"
+
+        "github.com/gin-gonic/gin"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/constants"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/models"
+)
+
+func (server *Server) RenewAccessToken(ctx *gin.Context) <span class="cov0" title="0">{
+        var req models.RenewAccessTokenRequest
+        if err := ctx.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">refreshPayload, err := server.TokenMaker.VerifyToken(req.RefreshToken)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusUnauthorized, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">session, err := server.Repo.GetSession(refreshPayload.ID)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">if session.IsBlocked </span><span class="cov0" title="0">{
+                err := errors.New("blocked session")
+                ctx.JSON(http.StatusUnauthorized, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">if session.Username != refreshPayload.Username </span><span class="cov0" title="0">{
+                err := errors.New("incorrect session user")
+                ctx.JSON(http.StatusUnauthorized, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">if session.RefreshToken != req.RefreshToken </span><span class="cov0" title="0">{
+                err := errors.New("invalid refresh token")
+                ctx.JSON(http.StatusUnauthorized, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">if time.Now().After(session.ExpiresAt) </span><span class="cov0" title="0">{
+                err := errors.New("expired refresh token")
+                ctx.JSON(http.StatusUnauthorized, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">token, accessPayload, err := server.TokenMaker.CreateToken(refreshPayload.Username, server.Config.TokenDuration)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">response := models.RenewAccessTokenResponse{
+                AccessToken:          token,
+                AccessTokenExpiresAt: accessPayload.ExpiresAt.Time,
+        }
+
+        ctx.JSON(http.StatusOK, response)</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package handlers
 
 import (
         "errors"
@@ -390,7 +495,29 @@ func (server *Server) Login(ctx *gin.Context) <span class="cov8" title="1">{
                 return
         }</span>
 
-        <span class="cov8" title="1">token, err := server.TokenMaker.CreateToken(req.Username, server.Config.TokenDuration)
+        <span class="cov8" title="1">token, accessPayload, err := server.TokenMaker.CreateToken(req.Username, server.Config.TokenDuration)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov8" title="1">refreshToken, refreshPayload, err := server.TokenMaker.CreateToken(req.Username, server.Config.RefreshTokenDuration)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov8" title="1">args := models.Session{
+                ID:           refreshPayload.ID,
+                Username:     req.Username,
+                RefreshToken: refreshToken,
+                UserAgent:    ctx.Request.UserAgent(),
+                ClientIP:     ctx.ClientIP(),
+                ExpiresAt:    refreshPayload.ExpiresAt.Time,
+                IsBlocked:    false,
+        }
+
+        session, err := server.Repo.CreateSession(args)
         if err != nil </span><span class="cov0" title="0">{
                 ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
                 return
@@ -399,8 +526,12 @@ func (server *Server) Login(ctx *gin.Context) <span class="cov8" title="1">{
         <span class="cov8" title="1">user := models.ConvertToUserDto(userData)
 
         response := models.LoginResponse{
-                User:  user,
-                Token: token,
+                SessionId:             session.ID,
+                AccessToken:           token,
+                AccessTokenExpiresAt:  accessPayload.ExpiresAt.Time,
+                RefreshToken:          refreshToken,
+                RefreshTokenExpiresAt: refreshPayload.ExpiresAt.Time,
+                User:                  user,
         }
 
         ctx.JSON(http.StatusOK, response)</span>
@@ -431,7 +562,7 @@ func (server *Server) DeleteUser(ctx *gin.Context) <span class="cov0" title="0">
 }
 </pre>
 		
-		<pre class="file" id="file3" style="display: none">package middleware
+		<pre class="file" id="file5" style="display: none">package middleware
 
 import (
         "errors"
