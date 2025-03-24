@@ -46,7 +46,7 @@ func (r *Repo) ListEvents(limit, offset int) ([]models.Event, error) {
 	return events, nil
 }
 
-func (r *Repo) ExecuteEvent(username string, eventID int64, status string, apiPayload datatypes.JSON) (int64, error) {
+func (r *Repo) ExecuteEvent(username string, eventID int64, logType string, status string, apiPayload datatypes.JSON) (int64, error) {
 	tx := r.DB.Begin()
 	if tx.Error != nil {
 		return 0, tx.Error
@@ -64,7 +64,7 @@ func (r *Repo) ExecuteEvent(username string, eventID int64, status string, apiPa
 		TriggeredOn: time.Now(),
 		Status:      status,
 		IsArchived:  false,
-		LogType:     "API_EVENT",
+		LogType:     logType,
 		ExecutedBy:  username,
 		ApiPayload:  apiPayload,
 	}

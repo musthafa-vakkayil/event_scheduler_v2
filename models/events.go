@@ -41,3 +41,13 @@ type ListEventsResponse []Event
 type GetEventRequest struct {
 	ID int `uri:"id" binding:"required"`
 }
+
+// @Description CreateScheduledEventRequest object used for input
+type CreateScheduledEventRequest struct {
+	Name         string     `json:"name" binding:"required" example:"Scheduled Event 1"`
+	Type         string     `json:"type" binding:"required,oneof=SCHEDULED" example:"SCHEDULED"`
+	RunAtDate    *time.Time `json:"run_at_this_date" example:"2021-08-01T00:00:00Z"`
+	RunAfterMins int        `json:"run_after_x_mins" example:"5"`
+	IntervalMins int        `json:"repeat_after_x_mins" example:"5"`
+	IsRecurring  bool       `json:"is_recurring" example:"false"`
+}

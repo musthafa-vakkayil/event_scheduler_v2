@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	TaskArchiveLog = "log:archive"
-	TaskDeleteLog  = "log:delete"
+	TaskArchiveLog    = "log:archive"
+	TaskDeleteLog     = "log:delete"
+	TaskScheduleEvent = "event:schedule"
 )
 
 // Worker struct holds Redis server, Redis client, and GORM DB
@@ -27,11 +28,11 @@ func StartWorker(redisAddr string, redisClient *asynq.Client, cfg config.Config,
 	srv := asynq.NewServer(
 		asynq.RedisClientOpt{Addr: redisAddr},
 		asynq.Config{
-			Concurrency: 10,
+			Concurrency: 12,
 			Queues: map[string]int{
 				"critical": 6,
 				"default":  3,
-				"low":      1,
+				"low":      3,
 			},
 		},
 	)
@@ -47,6 +48,7 @@ func StartWorker(redisAddr string, redisClient *asynq.Client, cfg config.Config,
 	mux := asynq.NewServeMux()
 	mux.HandleFunc(TaskArchiveLog, worker.ArchiveLogHandler)
 	mux.HandleFunc(TaskDeleteLog, worker.DeleteLogHandler)
+	mux.HandleFunc(TaskScheduleEvent, worker.ScheduleEventHandler)
 
 	log.Println("🚀 Worker started with Redis server, Redis client, and DB connection...")
 

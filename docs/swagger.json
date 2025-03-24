@@ -143,6 +143,115 @@
                 }
             }
         },
+        "/events/schedule": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Schedule a new event for future",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Create Scheduled Event",
+                "parameters": [
+                    {
+                        "description": "Schedule Event data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateScheduledEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SwaggerEventDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.BadRequestResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.UnauthorizedRequestResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.InternalServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get an event by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Get Event by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SwaggerEventDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.BadRequestResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.UnauthorizedRequestResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.InternalServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/login": {
             "post": {
                 "description": "Authenticate and get access/refresh tokens",
@@ -465,6 +574,43 @@
                         "API"
                     ],
                     "example": "API"
+                }
+            }
+        },
+        "models.CreateScheduledEventRequest": {
+            "description": "CreateScheduledEventRequest object used for input",
+            "type": "object",
+            "required": [
+                "name",
+                "type"
+            ],
+            "properties": {
+                "is_recurring": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Scheduled Event 1"
+                },
+                "repeat_after_x_mins": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "run_after_x_mins": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "run_at_this_date": {
+                    "type": "string",
+                    "example": "2021-08-01T00:00:00Z"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "SCHEDULED"
+                    ],
+                    "example": "SCHEDULED"
                 }
             }
         },

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -58,7 +57,7 @@ func (server *Server) ExecuteAPIEvent(ctx *gin.Context) {
 
 	authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
 
-	logId, err := server.Repo.ExecuteEvent(authPayload.Username, event.ID, resp.Status, event.ApiRequestBody)
+	logId, err := server.Repo.ExecuteEvent(authPayload.Username, event.ID, "API_EVENT", resp.Status, event.ApiRequestBody)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
@@ -67,13 +66,13 @@ func (server *Server) ExecuteAPIEvent(ctx *gin.Context) {
 	// Create an archive task
 	archiveTask, err := tasks.NewArchiveLogTask(int(logId))
 	if err != nil {
-		log.Fatal("Failed to create archive task:", err)
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 	}
 
 	// Enqueue the archive task with a 2-minute delay (for testing)
 	_, err = server.QueueClient.Enqueue(archiveTask, asynq.Queue("low"), asynq.ProcessIn(server.Config.LogArchiveDuration))
 	if err != nil {
-		log.Fatal("Failed to enqueue archive task:", err)
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 	}
 
 	// Invalidate cache

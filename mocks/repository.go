@@ -154,9 +154,9 @@ func (_m *Repository) DeleteUser(username string) error {
 	return r0
 }
 
-// ExecuteEvent provides a mock function with given fields: username, eventID, status, apiPayload
-func (_m *Repository) ExecuteEvent(username string, eventID int64, status string, apiPayload datatypes.JSON) (int64, error) {
-	ret := _m.Called(username, eventID, status, apiPayload)
+// ExecuteEvent provides a mock function with given fields: username, eventID, logType, status, apiPayload
+func (_m *Repository) ExecuteEvent(username string, eventID int64, logType string, status string, apiPayload datatypes.JSON) (int64, error) {
+	ret := _m.Called(username, eventID, logType, status, apiPayload)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ExecuteEvent")
@@ -164,17 +164,17 @@ func (_m *Repository) ExecuteEvent(username string, eventID int64, status string
 
 	var r0 int64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, int64, string, datatypes.JSON) (int64, error)); ok {
-		return rf(username, eventID, status, apiPayload)
+	if rf, ok := ret.Get(0).(func(string, int64, string, string, datatypes.JSON) (int64, error)); ok {
+		return rf(username, eventID, logType, status, apiPayload)
 	}
-	if rf, ok := ret.Get(0).(func(string, int64, string, datatypes.JSON) int64); ok {
-		r0 = rf(username, eventID, status, apiPayload)
+	if rf, ok := ret.Get(0).(func(string, int64, string, string, datatypes.JSON) int64); ok {
+		r0 = rf(username, eventID, logType, status, apiPayload)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, int64, string, datatypes.JSON) error); ok {
-		r1 = rf(username, eventID, status, apiPayload)
+	if rf, ok := ret.Get(1).(func(string, int64, string, string, datatypes.JSON) error); ok {
+		r1 = rf(username, eventID, logType, status, apiPayload)
 	} else {
 		r1 = ret.Error(1)
 	}

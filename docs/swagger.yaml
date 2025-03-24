@@ -39,6 +39,33 @@ definitions:
     - name
     - type
     type: object
+  models.CreateScheduledEventRequest:
+    description: CreateScheduledEventRequest object used for input
+    properties:
+      is_recurring:
+        example: false
+        type: boolean
+      name:
+        example: Scheduled Event 1
+        type: string
+      repeat_after_x_mins:
+        example: 5
+        type: integer
+      run_after_x_mins:
+        example: 5
+        type: integer
+      run_at_this_date:
+        example: "2021-08-01T00:00:00Z"
+        type: string
+      type:
+        enum:
+        - SCHEDULED
+        example: SCHEDULED
+        type: string
+    required:
+    - name
+    - type
+    type: object
   models.CreateUserRequest:
     description: CreateUserRequest object used for input
     properties:
@@ -222,6 +249,39 @@ paths:
       summary: List Events
       tags:
       - Events
+  /events/{id}:
+    get:
+      description: Get an event by ID
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SwaggerEventDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.BadRequestResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.UnauthorizedRequestResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.InternalServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Event by ID
+      tags:
+      - Events
   /events/api:
     post:
       consumes:
@@ -256,6 +316,42 @@ paths:
       security:
       - BearerAuth: []
       summary: Create API Event
+      tags:
+      - Events
+  /events/schedule:
+    post:
+      consumes:
+      - application/json
+      description: Schedule a new event for future
+      parameters:
+      - description: Schedule Event data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateScheduledEventRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SwaggerEventDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.BadRequestResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.UnauthorizedRequestResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.InternalServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Scheduled Event
       tags:
       - Events
   /login:
