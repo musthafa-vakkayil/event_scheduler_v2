@@ -24,12 +24,10 @@ CREATE TABLE "events" (
 
 CREATE TABLE "logs" (
   "id" bigserial PRIMARY KEY,
-  "event_id" bigint NOT NULL,
+  "event_id" bigint DEFAULT NULL,
   "executed_on" timestamp NOT NULL,
   "status" varchar NOT NULL,
   "is_archived" bool DEFAULT false 
 );
 
 ALTER TABLE "events" ADD FOREIGN KEY ("created_by") REFERENCES "users" ("username");
-
-ALTER TABLE "logs" ADD FOREIGN KEY ("event_id") REFERENCES "events" ("id");

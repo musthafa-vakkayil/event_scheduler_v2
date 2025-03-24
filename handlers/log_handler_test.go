@@ -24,7 +24,7 @@ func TestListLogsCacheMiss(t *testing.T) {
 
 	// Mock DB fallback
 	mockRepo.On("ListLogs", true, false, 10, 0).Return([]models.LogsResponse{
-		{ID: 2, Name: "DB Log"},
+		{ID: 2, ExecutedBy: "DB Log"},
 	}, nil)
 
 	mockCache.On("Set", mock.Anything, mock.Anything, false, true, 1, 10, mock.Anything).Return(nil)
@@ -55,7 +55,7 @@ func TestListLogsCacheHit(t *testing.T) {
 
 	// Mock cache hit
 	mockCache.On("Get", mock.Anything, false, false, 1, 10).Return([]models.LogsResponse{
-		{ID: 1, Name: "Cache Hit Log"},
+		{ID: 1, ExecutedBy: "Cache Hit Log"},
 	}, nil)
 
 	server := SetupTestServer(t, mockRepo, mockCache)
@@ -86,7 +86,7 @@ func TestListLogsCacheError(t *testing.T) {
 
 	// Mock DB fallback
 	mockRepo.On("ListLogs", true, false, 10, 0).Return([]models.LogsResponse{
-		{ID: 3, Name: "DB Fallback Log"},
+		{ID: 3, ExecutedBy: "DB Fallback Log"},
 	}, nil)
 
 	// Cache set after DB fallback

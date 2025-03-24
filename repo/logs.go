@@ -8,8 +8,7 @@ func (r *Repo) ListLogs(onlyActive bool, onlyArchived bool, limit int, offset in
 	var logs []models.LogsResponse
 
 	query := r.DB.Table("logs").
-		Joins("INNER JOIN events ON logs.event_id = events.id").
-		Select("logs.id, events.name, events.created_by, logs.executed_on, logs.status, logs.is_archived, logs.log_type")
+		Select("logs.id, logs.executed_by, logs.triggered_on, logs.status, logs.is_archived, logs.log_type, logs.api_payload")
 
 	if onlyActive {
 		query = query.Where("logs.is_archived = false")

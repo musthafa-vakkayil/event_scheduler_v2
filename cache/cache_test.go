@@ -34,7 +34,7 @@ func TestRedisCacheIntegration(t *testing.T) {
 
 	// Test Set and Get operations
 	logs := []models.LogsResponse{
-		{ID: 1, Name: "Test log"},
+		{ID: 1, ExecutedBy: "Test log"},
 	}
 
 	// Set cache
@@ -46,7 +46,7 @@ func TestRedisCacheIntegration(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, cachedLogs)
 	assert.Equal(t, 1, len(cachedLogs))
-	assert.Equal(t, "Test log", cachedLogs[0].Name)
+	assert.Equal(t, "Test log", cachedLogs[0].ExecutedBy)
 
 	// Delete cache
 	err = cache.DeletePattern(ctx, "event-scheduler*")

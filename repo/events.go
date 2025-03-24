@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -45,7 +46,7 @@ func (r *Repo) ListEvents(limit, offset int) ([]models.Event, error) {
 	return events, nil
 }
 
-func (r *Repo) ExecuteEvent(eventID int64, status string) (int64, error) {
+func (r *Repo) ExecuteEvent(username string, eventID int64, status string, apiPayload datatypes.JSON) (int64, error) {
 	tx := r.DB.Begin()
 	if tx.Error != nil {
 		return 0, tx.Error
@@ -59,11 +60,13 @@ func (r *Repo) ExecuteEvent(eventID int64, status string) (int64, error) {
 
 	// Create log entry
 	log := models.Log{
-		EventId:    eventID,
-		ExecutedOn: time.Now(),
-		Status:     status,
-		IsArchived: false,
-		LogType:    "API_EVENT",
+		EventId:     eventID,
+		TriggeredOn: time.Now(),
+		Status:      status,
+		IsArchived:  false,
+		LogType:     "API_EVENT",
+		ExecutedBy:  username,
+		ApiPayload:  apiPayload,
 	}
 
 	if err := tx.Create(&log).Error; err != nil {
@@ -78,12 +81,6 @@ func (r *Repo) DeleteEvent(eventID int64) error {
 	tx := r.DB.Begin()
 	if tx.Error != nil {
 		return tx.Error
-	}
-
-	// Delete logs associated with the event
-	if err := tx.Where("event_id = ?", eventID).Delete(&models.Log{}).Error; err != nil {
-		tx.Rollback()
-		return err
 	}
 
 	// Delete the event

@@ -12,6 +12,7 @@ import (
 	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/tasks"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/utils"
 )
 
@@ -55,7 +56,9 @@ func (server *Server) ExecuteAPIEvent(ctx *gin.Context) {
 		return
 	}
 
-	logId, err := server.Repo.ExecuteEvent(event.ID, resp.Status)
+	authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
+
+	logId, err := server.Repo.ExecuteEvent(authPayload.Username, event.ID, resp.Status, event.ApiRequestBody)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
