@@ -37,21 +37,6 @@ func (r *Repo) DeleteUser(username string) error {
 		return tx.Error
 	}
 
-	// Fetch events created by user
-	var eventIDs []int64
-	if err := tx.Model(&models.Event{}).Where("created_by = ?", username).Pluck("id", &eventIDs).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	// Delete logs for user's events
-	if len(eventIDs) > 0 {
-		if err := tx.Where("event_id IN (?)", eventIDs).Delete(&models.Log{}).Error; err != nil {
-			tx.Rollback()
-			return err
-		}
-	}
-
 	// Delete events created by user
 	if err := tx.Where("created_by = ?", username).Delete(&models.Event{}).Error; err != nil {
 		tx.Rollback()

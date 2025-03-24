@@ -119,6 +119,17 @@ func (server *Server) GetEvent(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, event)
 }
 
+// @Summary Delete Event
+// @Description Delete an Event
+// @Tags Events
+// @Produce json
+// @Param id path int true "Event ID"
+// @Success 200 {string} models.EmptyResponse
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
+// @Router /events/{id} [delete]
+// @Security BearerAuth
 func (server *Server) DeleteEvent(ctx *gin.Context) {
 	var req models.GetEventRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {

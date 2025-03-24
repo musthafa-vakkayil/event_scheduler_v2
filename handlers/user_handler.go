@@ -87,7 +87,7 @@ func (server *Server) GetUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, userDto)
 }
 
-// @Summary Login user
+// @Summary Get Access Token
 // @Description Authenticate and get access/refresh tokens
 // @Tags Auth
 // @Accept json

@@ -68,3 +68,16 @@ type SwaggerEventDto struct {
 
 // @Description SwaggerListEventResponse used only for Swagger docs
 type SwaggerListEventResponse []SwaggerEventDto
+
+type SwaggerLogs struct {
+	ID          int64             `json:"id"`
+	ExecutedBy  string            `json:"executed_by"`
+	TriggeredOn time.Time         `json:"triggered_on"`
+	Status      string            `json:"status"`
+	IsArchived  bool              `json:"is_archived"`
+	LogType     string            `json:"log_type"`
+	ApiPayload  map[string]string `json:"api_payload"`
+}
+
+// @Description SwaggerLogsResponse used only for Swagger docs
+type SwaggerLogsResponse []SwaggerLogs

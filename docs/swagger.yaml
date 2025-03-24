@@ -172,6 +172,25 @@ definitions:
       type:
         type: string
     type: object
+  models.SwaggerLogs:
+    properties:
+      api_payload:
+        additionalProperties:
+          type: string
+        type: object
+      executed_by:
+        type: string
+      id:
+        type: integer
+      is_archived:
+        type: boolean
+      log_type:
+        type: string
+      status:
+        type: string
+      triggered_on:
+        type: string
+    type: object
   models.UnauthorizedRequestResponse:
     description: Standard error response object
     properties:
@@ -250,6 +269,38 @@ paths:
       tags:
       - Events
   /events/{id}:
+    delete:
+      description: Delete an Event
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.BadRequestResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.UnauthorizedRequestResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.InternalServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Event
+      tags:
+      - Events
     get:
       description: Get an event by ID
       parameters:
@@ -389,9 +440,60 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.InternalServerErrorResponse'
-      summary: Login user
+      summary: Get Access Token
       tags:
       - Auth
+  /logs:
+    get:
+      description: List all Executed Events
+      parameters:
+      - description: Page Number
+        in: query
+        minimum: 1
+        name: pageNumber
+        required: true
+        type: integer
+      - description: Page Size
+        in: query
+        minimum: 1
+        name: pageSize
+        required: true
+        type: integer
+      - description: Only Active Events
+        in: query
+        name: onlyActive
+        type: boolean
+      - description: Only Archived Events
+        in: query
+        name: onlyArchived
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            description: SwaggerLogsResponse used only for Swagger docs
+            items:
+              $ref: '#/definitions/models.SwaggerLogs'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.BadRequestResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.UnauthorizedRequestResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.InternalServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List Triggers
+      tags:
+      - Logs
   /token/renew:
     post:
       consumes:

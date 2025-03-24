@@ -9,6 +9,20 @@ import (
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
 )
 
+// @Summary List Triggers
+// @Description List all Executed Events
+// @Tags Logs
+// @Produce json
+// @Param pageNumber query int true "Page Number" minimum(1)
+// @Param pageSize query int true "Page Size" minimum(1)
+// @Param onlyActive query bool false "Only Active Events"
+// @Param onlyArchived query bool false "Only Archived Events"
+// @Success 200 {object} models.SwaggerLogsResponse
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
+// @Router /logs [get]
+// @Security BearerAuth
 func (server *Server) ListLogs(ctx *gin.Context) {
 	var req models.ListLogsRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
