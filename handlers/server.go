@@ -72,9 +72,11 @@ func (server *Server) SetupRoutes() {
 	// Authenticated routes with JWT
 	authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.TokenMaker))
 
+	// User Routes
 	authRoutes.GET("/users/:username", server.GetUser)
 	authRoutes.DELETE("/users/:username", server.DeleteUser)
 
+	// Event Routes
 	authRoutes.POST("/events/api", server.CreateAPIEvent)
 	authRoutes.POST("/events/schedule", server.CreateScheduledEvent)
 	authRoutes.GET("/events", server.ListEvents)
@@ -82,7 +84,11 @@ func (server *Server) SetupRoutes() {
 	authRoutes.GET("/events/:id/execute", server.ExecuteAPIEvent)
 	authRoutes.DELETE("/events/:id", server.DeleteEvent)
 
+	// Log Routes
 	authRoutes.GET("/logs", server.ListLogs)
+
+	// Temporary Event routes
+	authRoutes.POST("/test/events/api", server.CreateTestAPIEvent)
 }
 
 // Start runs the HTTP server on a specific address

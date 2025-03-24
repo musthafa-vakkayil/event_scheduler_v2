@@ -32,3 +32,11 @@ func (r *Repo) MarkLogAsArchived(logID int) error {
 func (r *Repo) DeleteLog(logID int) error {
 	return r.DB.Delete(&models.Log{}, logID).Error
 }
+
+func (r *Repo) CreateLog(log models.Log) (models.Log, error) {
+	if err := r.DB.Create(&log).Error; err != nil {
+		return models.Log{}, err
+	}
+
+	return log, nil
+}

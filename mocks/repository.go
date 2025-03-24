@@ -44,6 +44,34 @@ func (_m *Repository) CreateEvent(event models.Event) (models.Event, error) {
 	return r0, r1
 }
 
+// CreateLog provides a mock function with given fields: log
+func (_m *Repository) CreateLog(log models.Log) (models.Log, error) {
+	ret := _m.Called(log)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateLog")
+	}
+
+	var r0 models.Log
+	var r1 error
+	if rf, ok := ret.Get(0).(func(models.Log) (models.Log, error)); ok {
+		return rf(log)
+	}
+	if rf, ok := ret.Get(0).(func(models.Log) models.Log); ok {
+		r0 = rf(log)
+	} else {
+		r0 = ret.Get(0).(models.Log)
+	}
+
+	if rf, ok := ret.Get(1).(func(models.Log) error); ok {
+		r1 = rf(log)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CreateSession provides a mock function with given fields: session
 func (_m *Repository) CreateSession(session models.Session) (models.Session, error) {
 	ret := _m.Called(session)

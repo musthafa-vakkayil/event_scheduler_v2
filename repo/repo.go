@@ -21,6 +21,7 @@ type Repository interface {
 	GetSession(id uuid.UUID) (models.Session, error)
 	MarkLogAsArchived(logID int) error
 	DeleteLog(logID int) error
+	CreateLog(log models.Log) (models.Log, error)
 }
 
 // Repository struct holds the GORM database instance
