@@ -89,6 +89,7 @@ func (server *Server) SetupRoutes() {
 
 	// Temporary Event routes
 	authRoutes.POST("/test/events/api", server.CreateTestAPIEvent)
+	authRoutes.POST("/test/events/schedule", server.CreateTestScheduledEvent)
 }
 
 // Start runs the HTTP server on a specific address

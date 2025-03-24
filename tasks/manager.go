@@ -14,6 +14,7 @@ type TaskManager interface {
 	EnqueueDeleteTask(ctx context.Context, logID int, delay time.Duration) error
 	EnqueueScheduleTaskIn(ctx context.Context, eventID int64, delay time.Duration) error
 	EnqueueScheduleTaskAt(ctx context.Context, eventID int64, time time.Time) error
+	EnqueueTestTaskAt(ctx context.Context, username string, time time.Time) error
 }
 
 // RedisTaskManager is the production implementation of TaskManager
@@ -81,6 +82,21 @@ func (tm *RedisTaskManager) EnqueueScheduleTaskAt(ctx context.Context, eventID i
 	_, err = tm.Client.EnqueueContext(ctx, task, asynq.Queue("critical"), asynq.ProcessAt(time))
 	if err != nil {
 		return fmt.Errorf("failed to enqueue schedule task: %w", err)
+	}
+
+	return nil
+}
+
+// EnqueueScheduleTaskAt enqueues a schedule task with a specific time
+func (tm *RedisTaskManager) EnqueueTestTaskAt(ctx context.Context, username string, time time.Time) error {
+	task, err := NewTestEventTask(username)
+	if err != nil {
+		return fmt.Errorf("failed to create test task: %w", err)
+	}
+
+	_, err = tm.Client.EnqueueContext(ctx, task, asynq.Queue("defualt"), asynq.ProcessAt(time))
+	if err != nil {
+		return fmt.Errorf("failed to enqueue test task: %w", err)
 	}
 
 	return nil

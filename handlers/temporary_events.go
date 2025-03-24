@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -83,4 +84,43 @@ func (server *Server) CreateTestAPIEvent(ctx *gin.Context) {
 	server.Cache.DeletePattern(ctx, cacheKey) // New cache invalidation method
 
 	ctx.JSON(http.StatusOK, json.RawMessage(body))
+}
+
+// @Summary Create Test Scheduled Event
+// @Description Schedule a one time event
+// @Tags Test Events
+// @Accept json
+// @Produce json
+// @Param request body models.CreateTestScheduledEventRequest true "Schedule Event data"
+// @Success 200 {object} models.EmptyResponse
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
+// @Router /test/events/schedule [post]
+// @Security BearerAuth
+func (server *Server) CreateTestScheduledEvent(ctx *gin.Context) {
+	var req models.CreateTestScheduledEventRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
+	}
+
+	if req.RunAtDate.Before(time.Now()) {
+		err := errors.New("run_at_this_date cannot be in the past")
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
+	}
+	// Get the authenticated user from the token
+	authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
+
+	enqueueTime := req.RunAtDate.UTC()
+	enqueueErr := server.TaskManager.EnqueueTestTaskAt(ctx, authPayload.Username, enqueueTime)
+
+	if enqueueErr != nil {
+		err := fmt.Errorf("failed to enqueue event: %v", enqueueErr)
+		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, "OK")
 }

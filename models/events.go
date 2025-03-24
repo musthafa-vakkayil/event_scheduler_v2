@@ -51,3 +51,8 @@ type CreateScheduledEventRequest struct {
 	IntervalMins int        `json:"repeat_after_x_mins" example:"5"`
 	IsRecurring  bool       `json:"is_recurring" example:"false"`
 }
+
+// @Description CreateTestScheduledEventRequest object used for input
+type CreateTestScheduledEventRequest struct {
+	RunAtDate time.Time `json:"run_at_this_date" binding:"required" example:"2021-08-01T00:00:00Z"`
+}

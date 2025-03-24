@@ -87,6 +87,24 @@ func (_m *TaskManager) EnqueueScheduleTaskIn(ctx context.Context, eventID int64,
 	return r0
 }
 
+// EnqueueTestTaskAt provides a mock function with given fields: ctx, username, _a2
+func (_m *TaskManager) EnqueueTestTaskAt(ctx context.Context, username string, _a2 time.Time) error {
+	ret := _m.Called(ctx, username, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnqueueTestTaskAt")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time) error); ok {
+		r0 = rf(ctx, username, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewTaskManager creates a new instance of TaskManager. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewTaskManager(t interface {

@@ -12,6 +12,7 @@ const (
 	TaskArchiveLog    = "log:archive"
 	TaskDeleteLog     = "log:delete"
 	TaskScheduleEvent = "event:schedule"
+	TaskTestSchedule  = "event:test"
 )
 
 // Worker struct holds Redis server, Redis client, and GORM DB

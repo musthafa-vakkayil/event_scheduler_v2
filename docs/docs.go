@@ -440,6 +440,114 @@ const docTemplate = `{
                 }
             }
         },
+        "/test/events/api": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new API Event without saving to DB",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Test Events"
+                ],
+                "summary": "Create Test API Event",
+                "parameters": [
+                    {
+                        "description": "API Event data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateAPIEventRequestSwagger"
+                        }
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.BadRequestResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.UnauthorizedRequestResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.InternalServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/test/events/schedule": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Schedule a one time event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Test Events"
+                ],
+                "summary": "Create Test Scheduled Event",
+                "parameters": [
+                    {
+                        "description": "Schedule Event data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateTestScheduledEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.EmptyResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.BadRequestResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.UnauthorizedRequestResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.InternalServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/token/renew": {
             "post": {
                 "description": "Get a new access token using the refresh token",
@@ -744,6 +852,19 @@ const docTemplate = `{
                 }
             }
         },
+        "models.CreateTestScheduledEventRequest": {
+            "description": "CreateTestScheduledEventRequest object used for input",
+            "type": "object",
+            "required": [
+                "run_at_this_date"
+            ],
+            "properties": {
+                "run_at_this_date": {
+                    "type": "string",
+                    "example": "2021-08-01T00:00:00Z"
+                }
+            }
+        },
         "models.CreateUserRequest": {
             "description": "CreateUserRequest object used for input",
             "type": "object",
@@ -765,6 +886,15 @@ const docTemplate = `{
                     "minLength": 6
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.EmptyResponse": {
+            "description": "Standard error response object",
+            "type": "object",
+            "properties": {
+                "ok": {
                     "type": "string"
                 }
             }

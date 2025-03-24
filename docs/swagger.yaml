@@ -66,6 +66,15 @@ definitions:
     - name
     - type
     type: object
+  models.CreateTestScheduledEventRequest:
+    description: CreateTestScheduledEventRequest object used for input
+    properties:
+      run_at_this_date:
+        example: "2021-08-01T00:00:00Z"
+        type: string
+    required:
+    - run_at_this_date
+    type: object
   models.CreateUserRequest:
     description: CreateUserRequest object used for input
     properties:
@@ -83,6 +92,12 @@ definitions:
     - full_name
     - password
     - username
+    type: object
+  models.EmptyResponse:
+    description: Standard error response object
+    properties:
+      ok:
+        type: string
     type: object
   models.InternalServerErrorResponse:
     description: Standard error response object
@@ -494,6 +509,74 @@ paths:
       summary: List Triggers
       tags:
       - Logs
+  /test/events/api:
+    post:
+      consumes:
+      - application/json
+      description: Create a new API Event without saving to DB
+      parameters:
+      - description: API Event data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateAPIEventRequestSwagger'
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.BadRequestResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.UnauthorizedRequestResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.InternalServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Test API Event
+      tags:
+      - Test Events
+  /test/events/schedule:
+    post:
+      consumes:
+      - application/json
+      description: Schedule a one time event
+      parameters:
+      - description: Schedule Event data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateTestScheduledEventRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.EmptyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.BadRequestResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.UnauthorizedRequestResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.InternalServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Test Scheduled Event
+      tags:
+      - Test Events
   /token/renew:
     post:
       consumes:

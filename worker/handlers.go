@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/hibiken/asynq"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/tasks"
 )
 
@@ -18,6 +19,10 @@ type LogPayload struct {
 
 type EventPayload struct {
 	EventID int64 `json:"event_id"`
+}
+
+type TestEventPayload struct {
+	Username string `json:"username"`
 }
 
 // ArchiveLogHandler processes the archive task
@@ -125,6 +130,44 @@ func (w *Worker) ScheduleEventHandler(ctx context.Context, t *asynq.Task) error 
 		}
 
 		log.Printf("✔️ Scheduled Event ID for Recurring: %d", payload.EventID)
+	}
+
+	return nil
+}
+
+// ScheduleEventHandler processes the schedule event task
+func (w *Worker) ScheduleTestEventHandler(ctx context.Context, t *asynq.Task) error {
+	var payload TestEventPayload
+	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
+		return fmt.Errorf("failed to unmarshal payload: %v", err)
+	}
+
+	log.Printf("✅ Executing test event created by: %s", payload.Username)
+
+	args := models.Log{
+		TriggeredOn: time.Now(),
+		Status:      "SUCCESS",
+		IsArchived:  false,
+		ExecutedBy:  payload.Username,
+		LogType:     "TEST_EVENT",
+	}
+
+	// Execute the event
+	log, err := w.Repo.CreateLog(args)
+	if err != nil {
+		return fmt.Errorf("failed to execute test event %s: %v", payload.Username, err)
+	}
+
+	// Create an archive task
+	archiveTask, err := tasks.NewArchiveLogTask(int(log.ID))
+	if err != nil {
+		return fmt.Errorf("failed to create archive task:%v", err)
+	}
+
+	// Enqueue the archive task with a 2-minute delay (for testing)
+	_, err = w.RedisClient.Enqueue(archiveTask, asynq.Queue("low"), asynq.ProcessIn(w.Config.LogArchiveDuration))
+	if err != nil {
+		return fmt.Errorf("failed to enqueue archive task:%v", err)
 	}
 
 	return nil
