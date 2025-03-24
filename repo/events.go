@@ -34,7 +34,7 @@ func (r *Repo) GetEvent(id int) (models.Event, error) {
 }
 
 func (r *Repo) ListEvents(limit, offset int) ([]models.Event, error) {
-	var events []models.Event
+	var events models.ListEventsResponse
 
 	// Use GORM query with limit and offset
 	err := r.DB.Order("id").Limit(limit).Offset(offset).Find(&events).Error
@@ -63,6 +63,7 @@ func (r *Repo) ExecuteEvent(eventID int64, status string) (int64, error) {
 		ExecutedOn: time.Now(),
 		Status:     status,
 		IsArchived: false,
+		LogType:    "API_EVENT",
 	}
 
 	if err := tx.Create(&log).Error; err != nil {

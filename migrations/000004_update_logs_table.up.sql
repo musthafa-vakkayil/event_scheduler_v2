@@ -1,0 +1,4 @@
+CREATE TYPE log_types AS ENUM ('TEST_EVENT', 'API_EVENT', 'SCHEDULED_EVENT');
+
+ALTER table logs
+ADD COLUMN log_type log_types NOT NULL DEFAULT 'API_EVENT';

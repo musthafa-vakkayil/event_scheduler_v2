@@ -13,6 +13,7 @@ import (
 	"github.com/musthafa-vakkayil/event_scheduler_v2/config"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/handlers"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/worker"
 )
 
 // @title Event Scheduler API
@@ -66,6 +67,9 @@ func main() {
 	}
 
 	server.QueueClient = queueClient
+
+	// Start worker with shared Redis client and DB
+	worker.StartWorker(cfg.RedisUrl, queueClient, cfg, repository)
 
 	go func() {
 		if err := server.Start(cfg.ServerAddress); err != nil {

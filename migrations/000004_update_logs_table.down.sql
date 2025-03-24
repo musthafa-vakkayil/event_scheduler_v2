@@ -1,0 +1,4 @@
+ALTER TABLE logs
+DROP COLUMN IF EXISTS log_type;
+
+DROP TYPE IF EXISTS "log_types";

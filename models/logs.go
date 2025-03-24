@@ -8,6 +8,7 @@ type Log struct {
 	ExecutedOn time.Time `json:"executed_on"`
 	Status     string    `json:"status" gorm:"not null"`
 	IsArchived bool      `json:"is_archived"`
+	LogType    string    `json:"log_type" gorm:"not null"`
 }
 
 type LogsResponse struct {
@@ -17,6 +18,7 @@ type LogsResponse struct {
 	ExecutedOn time.Time `json:"executed_on"`
 	Status     string    `json:"status"`
 	IsArchived bool      `json:"is_archived"`
+	LogType    string    `json:"log_type"`
 }
 
 type ListLogsRequest struct {

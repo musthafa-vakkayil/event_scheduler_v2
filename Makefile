@@ -1,4 +1,5 @@
 DB_URL=postgresql://postgres:12345@localhost:5678/event_scheduler?sslmode=disable
+MIGRATION_NAME ?= "init_schema"
 
 postgres:
 	docker run --name docker_postgres --network  event-network -e POSTGRES_PASSWORD=12345 -p 5678:5432 -d postgres
@@ -10,6 +11,10 @@ migrate-up:
 	migrate -path migrations -database "$(DB_URL)" -verbose up
 migrate-down:
 	migrate -path migrations -database "$(DB_URL)" -verbose down
+
+migrate-create:
+	migrate create -ext sql -dir migrations -seq $(MIGRATION_NAME)
+
 mock:
 	mockery --dir=repo --name=Repository --output=mocks --case=underscore 
 	mockery --dir=cache --name=Cache --output=mocks --case=underscore
@@ -29,4 +34,4 @@ db-docs:
 doc:
 	swag init
 
-.PHONY: postgres createdb dropdb migrate-up migrate-down run mock test build db-docs doc
+.PHONY: postgres createdb dropdb migrate-up migrate-down run mock test build db-docs doc migrate-create

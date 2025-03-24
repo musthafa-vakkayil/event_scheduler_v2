@@ -75,7 +75,7 @@ func (server *Server) SetupRoutes() {
 	authRoutes.GET("/users/:username", server.GetUser)
 	authRoutes.DELETE("/users/:username", server.DeleteUser)
 
-	authRoutes.POST("/events", server.CreateEvent)
+	authRoutes.POST("/events/api", server.CreateAPIEvent)
 	authRoutes.GET("/events", server.ListEvents)
 	authRoutes.GET("/events/:id", server.GetEvent)
 	authRoutes.GET("/events/:id/execute", server.ExecuteAPIEvent)

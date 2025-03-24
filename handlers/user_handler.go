@@ -19,7 +19,7 @@ import (
 // @Param request body models.CreateUserRequest true "User data"
 // @Success 200 {object} models.UserDto
 // @Failure 400 {object} models.BadRequestResponse
-// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
 // @Router /users [post]
 func (server *Server) CreateUser(ctx *gin.Context) {
 	var req models.CreateUserRequest
@@ -62,6 +62,7 @@ func (server *Server) CreateUser(ctx *gin.Context) {
 // @Failure 400 {object} models.BadRequestResponse
 // @Failure 401 {object} models.UnauthorizedRequestResponse
 // @Failure 404 {object} models.NotFoundResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
 // @Router /users/{username} [get]
 // @Security BearerAuth
 func (server *Server) GetUser(ctx *gin.Context) {
@@ -96,6 +97,7 @@ func (server *Server) GetUser(ctx *gin.Context) {
 // @Failure 400 {object} models.BadRequestResponse
 // @Failure 401 {object} models.UnauthorizedRequestResponse
 // @Failure 404 {object} models.NotFoundResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
 // @Router /login [post]
 func (server *Server) Login(ctx *gin.Context) {
 	var req models.LoginRequest
@@ -171,6 +173,7 @@ func (server *Server) Login(ctx *gin.Context) {
 // @Success 200 {string} models.EmptyResponse
 // @Failure 400 {object} models.BadRequestResponse
 // @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
 // @Router /users/{username} [delete]
 // @Security BearerAuth
 func (server *Server) DeleteUser(ctx *gin.Context) {

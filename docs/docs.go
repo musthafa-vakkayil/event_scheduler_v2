@@ -24,6 +24,128 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/events": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "List all events",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Events"
+                ],
+                "summary": "List Events",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Page Number",
+                        "name": "pageNumber",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Page Size",
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "description": "SwaggerListEventResponse used only for Swagger docs",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.SwaggerEventDto"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.BadRequestResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.UnauthorizedRequestResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.InternalServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/api": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new API Event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Create API Event",
+                "parameters": [
+                    {
+                        "description": "API Event data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateAPIEventRequestSwagger"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SwaggerEventDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.BadRequestResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.UnauthorizedRequestResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.InternalServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/login": {
             "post": {
                 "description": "Authenticate and get access/refresh tokens",
@@ -72,6 +194,64 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.NotFoundResponse"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.InternalServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/token/renew": {
+            "post": {
+                "description": "Get a new access token using the refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Renew Access Token",
+                "parameters": [
+                    {
+                        "description": "Token data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.RenewAccessTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.RenewAccessTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.BadRequestResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.UnauthorizedRequestResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.InternalServerErrorResponse"
+                        }
                     }
                 }
             }
@@ -113,10 +293,10 @@ const docTemplate = `{
                             "$ref": "#/definitions/models.BadRequestResponse"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/models.UnauthorizedRequestResponse"
+                            "$ref": "#/definitions/models.InternalServerErrorResponse"
                         }
                     }
                 }
@@ -173,6 +353,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.NotFoundResponse"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.InternalServerErrorResponse"
+                        }
                     }
                 }
             },
@@ -220,6 +406,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.UnauthorizedRequestResponse"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.InternalServerErrorResponse"
+                        }
                     }
                 }
             }
@@ -232,6 +424,50 @@ const docTemplate = `{
             "properties": {
                 "bad request": {
                     "type": "string"
+                }
+            }
+        },
+        "models.CreateAPIEventRequestSwagger": {
+            "description": "CreateAPIEventRequestSwagger used only for Swagger docs",
+            "type": "object",
+            "required": [
+                "api_endpoint",
+                "api_method",
+                "name",
+                "type"
+            ],
+            "properties": {
+                "api_endpoint": {
+                    "type": "string",
+                    "example": "https://api.example.com/v1/users"
+                },
+                "api_method": {
+                    "type": "string",
+                    "enum": [
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "PATCH",
+                        "DELETE"
+                    ],
+                    "example": "GET"
+                },
+                "api_payload": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "example": "API Event 1"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "API"
+                    ],
+                    "example": "API"
                 }
             }
         },
@@ -256,6 +492,15 @@ const docTemplate = `{
                     "minLength": 6
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.InternalServerErrorResponse": {
+            "description": "Standard error response object",
+            "type": "object",
+            "properties": {
+                "internal server error": {
                     "type": "string"
                 }
             }
@@ -306,6 +551,78 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "not found": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.RenewAccessTokenRequest": {
+            "description": "RenewAccessTokenRequest object used for input",
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.RenewAccessTokenResponse": {
+            "description": "RenewAccessTokenResponse object used for input",
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "access_token_expiry": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.SwaggerEventDto": {
+            "description": "SwaggerEventDto used only for Swagger docs",
+            "type": "object",
+            "properties": {
+                "after_x_mins": {
+                    "type": "integer"
+                },
+                "api_endpoint": {
+                    "type": "string"
+                },
+                "api_method": {
+                    "type": "string"
+                },
+                "api_request_body": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "executed_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "interval": {
+                    "type": "integer"
+                },
+                "is_recurring": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "run_at": {
+                    "type": "string"
+                },
+                "type": {
                     "type": "string"
                 }
             }

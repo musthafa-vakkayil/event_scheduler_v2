@@ -1,5 +1,4 @@
 DROP TABLE IF EXISTS "logs";
 DROP TABLE IF EXISTS "events";
 DROP TABLE IF EXISTS "users";
-DROP TYPE IF EXISTS "status_types";
 DROP TYPE IF EXISTS "event_types";

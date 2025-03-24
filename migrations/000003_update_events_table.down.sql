@@ -1,0 +1,11 @@
+ALTER TABLE events
+DROP COLUMN IF EXISTS run_at;
+
+ALTER TABLE events
+DROP COLUMN IF EXISTS after_x_mins;
+
+ALTER TABLE events
+DROP COLUMN IF EXISTS is_recurring;
+
+ALTER TABLE events
+DROP COLUMN IF EXISTS interval;

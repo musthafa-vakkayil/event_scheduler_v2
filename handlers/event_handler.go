@@ -2,19 +2,28 @@ package handlers
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hibiken/asynq"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
-	"github.com/musthafa-vakkayil/event_scheduler_v2/tasks"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
 )
 
-func (server *Server) CreateEvent(ctx *gin.Context) {
-	var req models.CreateEventRequest
+// @Summary Create API Event
+// @Description Create a new API Event
+// @Tags Events
+// @Accept json
+// @Produce json
+// @Param request body models.CreateAPIEventRequestSwagger true "API Event data"
+// @Success 200 {object} models.SwaggerEventDto
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
+// @Router /events/api [post]
+// @Security BearerAuth
+func (server *Server) CreateAPIEvent(ctx *gin.Context) {
+	var req models.CreateAPIEventRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return
@@ -47,6 +56,18 @@ func (server *Server) CreateEvent(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, event)
 }
 
+// @Summary List Events
+// @Description List all events
+// @Tags Events
+// @Produce json
+// @Param pageNumber query int true "Page Number" minimum(1)
+// @Param pageSize query int true "Page Size" minimum(1)
+// @Success 200 {object} models.SwaggerListEventResponse
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
+// @Router /events [get]
+// @Security BearerAuth
 func (server *Server) ListEvents(ctx *gin.Context) {
 	var req models.ListEventsRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
@@ -81,54 +102,6 @@ func (server *Server) GetEvent(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, event)
-}
-
-func (server *Server) ExecuteAPIEvent(ctx *gin.Context) {
-	var req models.GetEventRequest
-	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
-		return
-	}
-
-	event, err := server.Repo.GetEvent(req.ID)
-	if err != nil {
-		if err.Error() == "event not found" {
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "Event not found"})
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
-		return
-	}
-
-	if event.Type != "API" {
-		err := errors.New("cannot excute events other than API")
-		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
-		return
-	}
-
-	logId, err := server.Repo.ExecuteEvent(event.ID, "SUCCESS")
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
-		return
-	}
-
-	// Create an archive task
-	archiveTask, err := tasks.NewArchiveLogTask(int(logId))
-	if err != nil {
-		log.Fatal("Failed to create archive task:", err)
-	}
-
-	// Enqueue the archive task with a 2-minute delay (for testing)
-	_, err = server.QueueClient.Enqueue(archiveTask, asynq.Queue("low"), asynq.ProcessIn(server.Config.LogArchiveDuration))
-	if err != nil {
-		log.Fatal("Failed to enqueue archive task:", err)
-	}
-
-	// Invalidate cache
-	cacheKey := "event-scheduler:log-*"       // Wildcard pattern
-	server.Cache.DeletePattern(ctx, cacheKey) // New cache invalidation method
-
-	ctx.JSON(http.StatusOK, "OK")
 }
 
 func (server *Server) DeleteEvent(ctx *gin.Context) {

@@ -10,6 +10,17 @@ import (
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
 )
 
+// @Summary Renew Access Token
+// @Description Get a new access token using the refresh token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body models.RenewAccessTokenRequest true "Token data"
+// @Success 200 {object} models.RenewAccessTokenResponse
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
+// @Router /token/renew [post]
 func (server *Server) RenewAccessToken(ctx *gin.Context) {
 	var req models.RenewAccessTokenRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {

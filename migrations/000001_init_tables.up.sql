@@ -1,5 +1,4 @@
 CREATE TYPE event_types AS ENUM ('API', 'SCHEDULED');
-CREATE TYPE status_types AS ENUM ('SUCCESS', 'FAILED');
 
 CREATE TABLE "users" (
   "username" varchar PRIMARY KEY,
@@ -7,28 +6,28 @@ CREATE TABLE "users" (
   "email" varchar UNIQUE NOT NULL,
   "hashed_password" varchar NOT NULL,
   "password_changed_at" timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z',
-  "created_at" timestamptz NOT NULL DEFAULT (now()),
-  "updated_at" timestamptz DEFAULT NULL
+  "created_at" timestamp NOT NULL DEFAULT (now()),
+  "updated_at" timestamp DEFAULT NULL
 );
 
 CREATE TABLE "events" (
   "id" bigserial PRIMARY KEY,
   "name" varchar NOT NULL,
   "type" event_types NOT NULL,
-  "api_end_point" varchar NOT NULL,
+  "api_end_point" varchar,
   "api_method" varchar,
   "api_request_body" JSON,
   "created_by" varchar NOT NULL,
-  "created_at" timestamptz NOT NULL DEFAULT (now()),
-  "executed_at" timestamptz DEFAULT null
+  "created_at" timestamp NOT NULL DEFAULT (now()),
+  "executed_at" timestamp DEFAULT null
 );
 
 CREATE TABLE "logs" (
   "id" bigserial PRIMARY KEY,
   "event_id" bigint NOT NULL,
-  "executed_on" timestamptz NOT NULL,
-  "status" status_types NOT NULL,
-  "is_archived" bool DEFAULT false
+  "executed_on" timestamp NOT NULL,
+  "status" varchar NOT NULL,
+  "is_archived" bool DEFAULT false 
 );
 
 ALTER TABLE "events" ADD FOREIGN KEY ("created_by") REFERENCES "users" ("username");
