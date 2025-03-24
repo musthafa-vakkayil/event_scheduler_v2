@@ -17,13 +17,21 @@ services:
       - "6000:6379"
     restart: always
     command: redis-server --appendonly yes
-
+  
+  asynqmon:
+    image: hibiken/asynqmon
+    ports:
+      - "8080:8080"
+    environment:
+      REDIS_ADDR: "redis:6379"
+    depends_on:
+      - redis
   api:
     build: 
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "8000:8000"
     environment:
       - DB_PASSWORD=12345
       - DB_HOST=postgres

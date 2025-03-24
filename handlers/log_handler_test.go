@@ -18,6 +18,7 @@ func TestListLogsCacheMiss(t *testing.T) {
 
 	mockRepo := new(mocks.Repository)
 	mockCache := new(mocks.Cache)
+	mockManager := new(mocks.TaskManager)
 
 	// Mock cache miss
 	mockCache.On("Get", mock.Anything, false, true, 1, 10).Return(nil, nil)
@@ -29,7 +30,7 @@ func TestListLogsCacheMiss(t *testing.T) {
 
 	mockCache.On("Set", mock.Anything, mock.Anything, false, true, 1, 10, mock.Anything).Return(nil)
 
-	server := SetupTestServer(t, mockRepo, mockCache)
+	server := SetupTestServer(t, mockRepo, mockCache, mockManager)
 
 	// Perform the request
 	req, _ := http.NewRequest(http.MethodGet, "/logs?pageNumber=1&pageSize=10&onlyActive=true", nil)
@@ -52,13 +53,14 @@ func TestListLogsCacheHit(t *testing.T) {
 
 	mockRepo := new(mocks.Repository)
 	mockCache := new(mocks.Cache)
+	mockManager := new(mocks.TaskManager)
 
 	// Mock cache hit
 	mockCache.On("Get", mock.Anything, false, false, 1, 10).Return([]models.LogsResponse{
 		{ID: 1, ExecutedBy: "Cache Hit Log"},
 	}, nil)
 
-	server := SetupTestServer(t, mockRepo, mockCache)
+	server := SetupTestServer(t, mockRepo, mockCache, mockManager)
 
 	// Perform the request
 	req, _ := http.NewRequest(http.MethodGet, "/logs?pageNumber=1&pageSize=10", nil)
@@ -80,6 +82,7 @@ func TestListLogsCacheError(t *testing.T) {
 
 	mockRepo := new(mocks.Repository)
 	mockCache := new(mocks.Cache)
+	mockManager := new(mocks.TaskManager)
 
 	// Mock cache error
 	mockCache.On("Get", mock.Anything, false, true, 1, 10).Return(nil, errors.New("redis error"))
@@ -92,7 +95,7 @@ func TestListLogsCacheError(t *testing.T) {
 	// Cache set after DB fallback
 	mockCache.On("Set", mock.Anything, mock.Anything, false, true, 1, 10, mock.Anything).Return(nil)
 
-	server := SetupTestServer(t, mockRepo, mockCache)
+	server := SetupTestServer(t, mockRepo, mockCache, mockManager)
 
 	// Perform the request
 	req, _ := http.NewRequest(http.MethodGet, "/logs?pageNumber=1&pageSize=10&onlyActive=true", nil)
@@ -115,6 +118,7 @@ func TestListLogsInternalError(t *testing.T) {
 
 	mockRepo := new(mocks.Repository)
 	mockCache := new(mocks.Cache)
+	mockManager := new(mocks.TaskManager)
 
 	// Mock cache miss
 	mockCache.On("Get", mock.Anything, false, true, 1, 10).Return(nil, nil)
@@ -122,7 +126,7 @@ func TestListLogsInternalError(t *testing.T) {
 	// Mock DB fallback
 	mockRepo.On("ListLogs", true, false, 10, 0).Return([]models.LogsResponse{}, errors.New("internal_error"))
 
-	server := SetupTestServer(t, mockRepo, mockCache)
+	server := SetupTestServer(t, mockRepo, mockCache, mockManager)
 
 	// Perform the request
 	req, _ := http.NewRequest(http.MethodGet, "/logs?pageNumber=1&pageSize=10&onlyActive=true", nil)
@@ -141,8 +145,9 @@ func TestListLogsBadRequest(t *testing.T) {
 
 	mockRepo := new(mocks.Repository)
 	mockCache := new(mocks.Cache)
+	mockManager := new(mocks.TaskManager)
 
-	server := SetupTestServer(t, mockRepo, mockCache)
+	server := SetupTestServer(t, mockRepo, mockCache, mockManager)
 
 	// Perform the request
 	req, _ := http.NewRequest(http.MethodGet, "/logs", nil)

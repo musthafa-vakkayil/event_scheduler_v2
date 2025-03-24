@@ -85,6 +85,11 @@ func (w *Worker) ScheduleEventHandler(ctx context.Context, t *asynq.Task) error 
 	// Get the event from the DB
 	event, err := w.Repo.GetEvent(int(payload.EventID))
 	if err != nil {
+		if err.Error() == "event not found" {
+			// Skip the task if the event is deleted or not found
+			log.Printf("⚠️ Event %d not found. Skipping task.", payload.EventID)
+			return nil // Returning nil skips the retry
+		}
 		return fmt.Errorf("failed to get event %d: %v", payload.EventID, err)
 	}
 

@@ -7,10 +7,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hibiken/asynq"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
-	"github.com/musthafa-vakkayil/event_scheduler_v2/tasks"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/utils"
 )
@@ -63,16 +61,10 @@ func (server *Server) ExecuteAPIEvent(ctx *gin.Context) {
 		return
 	}
 
-	// Create an archive task
-	archiveTask, err := tasks.NewArchiveLogTask(int(logId))
+	err = server.TaskManager.EnqueueArchiveTask(ctx, int(logId), server.Config.LogArchiveDuration)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
-	}
-
-	// Enqueue the archive task with a 2-minute delay (for testing)
-	_, err = server.QueueClient.Enqueue(archiveTask, asynq.Queue("low"), asynq.ProcessIn(server.Config.LogArchiveDuration))
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+		return
 	}
 
 	// Invalidate cache

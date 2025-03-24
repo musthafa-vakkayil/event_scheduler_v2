@@ -7,11 +7,11 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/hibiken/asynq"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/cache"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/config"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/middleware"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/tasks"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -29,17 +29,17 @@ type Server struct {
 	TokenMaker  token.Maker
 	Router      *gin.Engine
 	Repo        repo.Repository
-	QueueClient *asynq.Client
 	Cache       cache.Cache
+	TaskManager tasks.TaskManager
 }
 
-func NewServer(config config.Config, repo repo.Repository, cache cache.Cache) (*Server, error) {
+func NewServer(config config.Config, repo repo.Repository, cache cache.Cache, tm tasks.TaskManager) (*Server, error) {
 	maker, err := token.NewJWTMaker(config.JWTSecretKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable create token maker %w", err)
 	}
 
-	server := &Server{TokenMaker: maker, Config: config, Repo: repo, Cache: cache}
+	server := &Server{TokenMaker: maker, Config: config, Repo: repo, Cache: cache, TaskManager: tm}
 
 	server.SetupRoutes()
 

@@ -7,10 +7,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hibiken/asynq"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
-	"github.com/musthafa-vakkayil/event_scheduler_v2/tasks"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
 )
 
@@ -209,23 +207,17 @@ func (server *Server) CreateScheduledEvent(ctx *gin.Context) {
 		return
 	}
 
-	// Create an archive task
-	scheduleTask, err := tasks.NewScheduleEventTask(event.ID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
-	}
-
 	// Enqueue the task based on RunAt or RunAfter
 	var enqueueErr error
 
 	// If `RunAt` is provided → Enqueue with `ProcessAt`
 	if event.RunAt != nil {
 		enqueueTime := event.RunAt.UTC()
-		_, enqueueErr = server.QueueClient.Enqueue(scheduleTask, asynq.Queue("critical"), asynq.ProcessAt(enqueueTime))
+		enqueueErr = server.TaskManager.EnqueueScheduleTaskAt(ctx, event.ID, enqueueTime)
 	} else {
 		// If `RunAfterMins` is provided → Enqueue with `ProcessIn`
 		delay := time.Duration(event.AfterXMins) * time.Minute
-		_, enqueueErr = server.QueueClient.Enqueue(scheduleTask, asynq.Queue("critical"), asynq.ProcessIn(delay))
+		enqueueErr = server.TaskManager.EnqueueScheduleTaskIn(ctx, event.ID, delay)
 	}
 
 	if enqueueErr != nil {

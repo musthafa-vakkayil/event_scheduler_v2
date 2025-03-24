@@ -13,6 +13,7 @@ import (
 	"github.com/musthafa-vakkayil/event_scheduler_v2/config"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/handlers"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/tasks"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/worker"
 )
 
@@ -28,7 +29,7 @@ import (
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:8080
+// @host localhost:8000
 // @BasePath /
 // @schemes http
 
@@ -61,12 +62,13 @@ func main() {
 
 	cacheInstance := cache.NewRedisCache(redisClient)
 
-	server, err := handlers.NewServer(cfg, repository, cacheInstance)
+	// Initialize TaskManager
+	taskManager := tasks.NewRedisTaskManager(queueClient)
+
+	server, err := handlers.NewServer(cfg, repository, cacheInstance, taskManager)
 	if err != nil {
 		log.Fatal("cannot start server", err)
 	}
-
-	server.QueueClient = queueClient
 
 	// Start worker with shared Redis client and DB
 	worker.StartWorker(cfg.RedisUrl, queueClient, cfg, repository)
