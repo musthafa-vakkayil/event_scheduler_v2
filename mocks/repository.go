@@ -101,7 +101,7 @@ func (_m *Repository) CreateUser(user models.User) (models.User, error) {
 }
 
 // DeleteEvent provides a mock function with given fields: eventID
-func (_m *Repository) DeleteEvent(eventID int64) error {
+func (_m *Repository) DeleteEvent(eventID int) error {
 	ret := _m.Called(eventID)
 
 	if len(ret) == 0 {
@@ -109,7 +109,7 @@ func (_m *Repository) DeleteEvent(eventID int64) error {
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(int64) error); ok {
+	if rf, ok := ret.Get(0).(func(int) error); ok {
 		r0 = rf(eventID)
 	} else {
 		r0 = ret.Error(0)

@@ -77,7 +77,7 @@ func (r *Repo) ExecuteEvent(username string, eventID int64, logType string, stat
 	return log.ID, tx.Commit().Error
 }
 
-func (r *Repo) DeleteEvent(eventID int64) error {
+func (r *Repo) DeleteEvent(eventID int) error {
 	tx := r.DB.Begin()
 	if tx.Error != nil {
 		return tx.Error

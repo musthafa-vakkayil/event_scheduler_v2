@@ -14,7 +14,7 @@ type Repository interface {
 	GetEvent(id int) (models.Event, error)
 	ListEvents(limit, offset int) ([]models.Event, error)
 	ExecuteEvent(username string, eventID int64, logType string, status string, apiPayload datatypes.JSON) (int64, error)
-	DeleteEvent(eventID int64) error
+	DeleteEvent(eventID int) error
 	DeleteUser(username string) error
 	ListLogs(onlyActive bool, onlyArchived bool, limit int, offset int) ([]models.LogsResponse, error)
 	CreateSession(session models.Session) (models.Session, error)

@@ -135,7 +135,7 @@ func (server *Server) DeleteEvent(ctx *gin.Context) {
 		return
 	}
 
-	err := server.Repo.DeleteEvent(int64(req.ID))
+	err := server.Repo.DeleteEvent(req.ID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return
