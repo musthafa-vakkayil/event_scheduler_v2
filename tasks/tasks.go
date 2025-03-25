@@ -60,3 +60,12 @@ func NewTestEventTask(username string) (*asynq.Task, error) {
 	}
 	return asynq.NewTask(TaskScheduleEvent, payload, asynq.Queue("default")), nil
 }
+
+// Create Redis task for archiving
+func NewLogTask(logID int, taskType string, queueType string) (*asynq.Task, error) {
+	payload, err := json.Marshal(LogPayload{LogID: logID})
+	if err != nil {
+		return nil, err
+	}
+	return asynq.NewTask(taskType, payload, asynq.Queue(queueType)), nil
+}

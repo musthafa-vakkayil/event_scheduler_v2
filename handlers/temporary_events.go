@@ -73,7 +73,7 @@ func (server *Server) CreateTestAPIEvent(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 	}
 
-	err = server.TaskManager.EnqueueArchiveTask(ctx, int(logData.ID), server.Config.LogArchiveDuration)
+	err = server.TaskManager.EnqueueTask(ctx, int(logData.ID), constants.TASK_ARCHIVE_LOG, constants.LOW_PRIORITY_QUEUE, server.Config.LogArchiveDuration)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
 		return

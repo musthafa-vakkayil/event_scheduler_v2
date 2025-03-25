@@ -15,42 +15,6 @@ type TaskManager struct {
 	mock.Mock
 }
 
-// EnqueueArchiveTask provides a mock function with given fields: ctx, logID, delay
-func (_m *TaskManager) EnqueueArchiveTask(ctx context.Context, logID int, delay time.Duration) error {
-	ret := _m.Called(ctx, logID, delay)
-
-	if len(ret) == 0 {
-		panic("no return value specified for EnqueueArchiveTask")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, time.Duration) error); ok {
-		r0 = rf(ctx, logID, delay)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// EnqueueDeleteTask provides a mock function with given fields: ctx, logID, delay
-func (_m *TaskManager) EnqueueDeleteTask(ctx context.Context, logID int, delay time.Duration) error {
-	ret := _m.Called(ctx, logID, delay)
-
-	if len(ret) == 0 {
-		panic("no return value specified for EnqueueDeleteTask")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, time.Duration) error); ok {
-		r0 = rf(ctx, logID, delay)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // EnqueueScheduleTaskAt provides a mock function with given fields: ctx, eventID, _a2
 func (_m *TaskManager) EnqueueScheduleTaskAt(ctx context.Context, eventID int64, _a2 time.Time) error {
 	ret := _m.Called(ctx, eventID, _a2)
@@ -80,6 +44,24 @@ func (_m *TaskManager) EnqueueScheduleTaskIn(ctx context.Context, eventID int64,
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, int64, time.Duration) error); ok {
 		r0 = rf(ctx, eventID, delay)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// EnqueueTask provides a mock function with given fields: ctx, logID, taskType, queueType, delay
+func (_m *TaskManager) EnqueueTask(ctx context.Context, logID int, taskType string, queueType string, delay time.Duration) error {
+	ret := _m.Called(ctx, logID, taskType, queueType, delay)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnqueueTask")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, string, string, time.Duration) error); ok {
+		r0 = rf(ctx, logID, taskType, queueType, delay)
 	} else {
 		r0 = ret.Error(0)
 	}

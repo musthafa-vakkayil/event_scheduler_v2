@@ -59,19 +59,21 @@
 				
 				<option value="file1">github.com/musthafa-vakkayil/event_scheduler_v2/cache/logs.go (78.1%)</option>
 				
-				<option value="file2">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/event_handler.go (0.0%)</option>
+				<option value="file2">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/event_handler.go (26.6%)</option>
 				
 				<option value="file3">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/log_handler.go (100.0%)</option>
 				
-				<option value="file4">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/server.go (61.1%)</option>
+				<option value="file4">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/server.go (63.2%)</option>
 				
-				<option value="file5">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/token_handler.go (0.0%)</option>
+				<option value="file5">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/temporary_events.go (0.0%)</option>
 				
-				<option value="file6">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/trigger_handler.go (0.0%)</option>
+				<option value="file6">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/token_handler.go (0.0%)</option>
 				
-				<option value="file7">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/user_handler.go (67.1%)</option>
+				<option value="file7">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/trigger_handler.go (0.0%)</option>
 				
-				<option value="file8">github.com/musthafa-vakkayil/event_scheduler_v2/middleware/middleware.go (87.0%)</option>
+				<option value="file8">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/user_handler.go (67.1%)</option>
+				
+				<option value="file9">github.com/musthafa-vakkayil/event_scheduler_v2/middleware/middleware.go (87.0%)</option>
 				
 				</select>
 			</div>
@@ -281,24 +283,24 @@ func (server *Server) ListEvents(ctx *gin.Context) <span class="cov0" title="0">
 // @Failure 500 {object} models.InternalServerErrorResponse
 // @Router /events/{id} [get]
 // @Security BearerAuth
-func (server *Server) GetEvent(ctx *gin.Context) <span class="cov0" title="0">{
+func (server *Server) GetEvent(ctx *gin.Context) <span class="cov8" title="1">{
         var req models.GetEventRequest
-        if err := ctx.ShouldBindUri(&amp;req); err != nil </span><span class="cov0" title="0">{
+        if err := ctx.ShouldBindUri(&amp;req); err != nil </span><span class="cov8" title="1">{
                 ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
                 return
         }</span>
 
-        <span class="cov0" title="0">event, err := server.Repo.GetEvent(req.ID)
-        if err != nil </span><span class="cov0" title="0">{
-                if err.Error() == "event not found" </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">event, err := server.Repo.GetEvent(req.ID)
+        if err != nil </span><span class="cov8" title="1">{
+                if err.Error() == "event not found" </span><span class="cov8" title="1">{
                         ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
                         return
                 }</span>
-                <span class="cov0" title="0">ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                <span class="cov8" title="1">ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
                 return</span>
         }
 
-        <span class="cov0" title="0">ctx.JSON(http.StatusOK, event)</span>
+        <span class="cov8" title="1">ctx.JSON(http.StatusOK, event)</span>
 }
 
 // @Summary Delete Event
@@ -312,20 +314,20 @@ func (server *Server) GetEvent(ctx *gin.Context) <span class="cov0" title="0">{
 // @Failure 500 {object} models.InternalServerErrorResponse
 // @Router /events/{id} [delete]
 // @Security BearerAuth
-func (server *Server) DeleteEvent(ctx *gin.Context) <span class="cov0" title="0">{
+func (server *Server) DeleteEvent(ctx *gin.Context) <span class="cov8" title="1">{
         var req models.GetEventRequest
-        if err := ctx.ShouldBindUri(&amp;req); err != nil </span><span class="cov0" title="0">{
+        if err := ctx.ShouldBindUri(&amp;req); err != nil </span><span class="cov8" title="1">{
                 ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
                 return
         }</span>
 
-        <span class="cov0" title="0">err := server.Repo.DeleteEvent(int64(req.ID))
-        if err != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">err := server.Repo.DeleteEvent(req.ID)
+        if err != nil </span><span class="cov8" title="1">{
                 ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
                 return
         }</span>
 
-        <span class="cov0" title="0">ctx.JSON(http.StatusOK, "OK")</span>
+        <span class="cov8" title="1">ctx.JSON(http.StatusOK, "OK")</span>
 }
 
 // @Summary Create Scheduled Event
@@ -547,9 +549,11 @@ func (server *Server) SetupRoutes() <span class="cov8" title="1">{
         // Authenticated routes with JWT
         authRoutes := router.Group("/").Use(middleware.AuthMiddleware(server.TokenMaker))
 
+        // User Routes
         authRoutes.GET("/users/:username", server.GetUser)
         authRoutes.DELETE("/users/:username", server.DeleteUser)
 
+        // Event Routes
         authRoutes.POST("/events/api", server.CreateAPIEvent)
         authRoutes.POST("/events/schedule", server.CreateScheduledEvent)
         authRoutes.GET("/events", server.ListEvents)
@@ -557,7 +561,12 @@ func (server *Server) SetupRoutes() <span class="cov8" title="1">{
         authRoutes.GET("/events/:id/execute", server.ExecuteAPIEvent)
         authRoutes.DELETE("/events/:id", server.DeleteEvent)
 
+        // Log Routes
         authRoutes.GET("/logs", server.ListLogs)
+
+        // Temporary Event routes
+        authRoutes.POST("/test/events/api", server.CreateTestAPIEvent)
+        authRoutes.POST("/test/events/schedule", server.CreateTestScheduledEvent)
 }</span>
 
 // Start runs the HTTP server on a specific address
@@ -599,6 +608,134 @@ func ConnectGORM(cfg config.Config) (*gorm.DB, error) <span class="cov0" title="
 </pre>
 		
 		<pre class="file" id="file5" style="display: none">package handlers
+
+import (
+        "encoding/json"
+        "errors"
+        "fmt"
+        "io"
+        "net/http"
+        "time"
+
+        "github.com/gin-gonic/gin"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/constants"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/models"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/token"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/utils"
+)
+
+// @Summary Create Test API Event
+// @Description Create a new API Event without saving to DB
+// @Tags Test Events
+// @Accept json
+// @Produce json
+// @Param request body models.CreateAPIEventRequestSwagger true "API Event data"
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
+// @Router /test/events/api [post]
+// @Security BearerAuth
+func (server *Server) CreateTestAPIEvent(ctx *gin.Context) <span class="cov0" title="0">{
+        var req models.CreateAPIEventRequest
+        if err := ctx.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
+
+        // Validation for API Trigger
+        if req.Type == "API" &amp;&amp; req.ApiMethod != "GET" &amp;&amp; req.ApiMethod != "DELETE" &amp;&amp; req.ApiPayload == nil </span><span class="cov0" title="0">{
+                err := errors.New("api payload is required for methods other than GET and delete")
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        // Use the utility function to make the API call
+        <span class="cov0" title="0">payload := []byte(req.ApiPayload)
+        resp, err := utils.MakeAPICall(req.ApiMethod, req.ApiEndpoint, payload)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+        <span class="cov0" title="0">defer resp.Body.Close()
+
+        // Read the response body
+        body, err := io.ReadAll(resp.Body)
+        if err != nil </span><span class="cov0" title="0">{
+                err := errors.New("failed to read response body")
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">args := models.Log{
+                TriggeredOn: time.Now(),
+                Status:      resp.Status,
+                IsArchived:  false,
+                ExecutedBy:  authPayload.Username,
+                ApiPayload:  req.ApiPayload,
+                LogType:     "TEST_EVENT",
+        }
+
+        logData, err := server.Repo.CreateLog(args)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+        }</span>
+
+        <span class="cov0" title="0">err = server.TaskManager.EnqueueTask(ctx, int(logData.ID), constants.TASK_ARCHIVE_LOG, constants.LOW_PRIORITY_QUEUE, server.Config.LogArchiveDuration)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        // Invalidate cache
+        <span class="cov0" title="0">cacheKey := "event-scheduler:log-*"       // Wildcard pattern
+        server.Cache.DeletePattern(ctx, cacheKey) // New cache invalidation method
+
+        ctx.JSON(http.StatusOK, json.RawMessage(body))</span>
+}
+
+// @Summary Create Test Scheduled Event
+// @Description Schedule a one time event
+// @Tags Test Events
+// @Accept json
+// @Produce json
+// @Param request body models.CreateTestScheduledEventRequest true "Schedule Event data"
+// @Success 200 {object} models.EmptyResponse
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
+// @Router /test/events/schedule [post]
+// @Security BearerAuth
+func (server *Server) CreateTestScheduledEvent(ctx *gin.Context) <span class="cov0" title="0">{
+        var req models.CreateTestScheduledEventRequest
+        if err := ctx.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">if req.RunAtDate.Before(time.Now()) </span><span class="cov0" title="0">{
+                err := errors.New("run_at_this_date cannot be in the past")
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+        // Get the authenticated user from the token
+        <span class="cov0" title="0">authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
+
+        enqueueTime := req.RunAtDate.UTC()
+        enqueueErr := server.TaskManager.EnqueueTestTaskAt(ctx, authPayload.Username, enqueueTime)
+
+        if enqueueErr != nil </span><span class="cov0" title="0">{
+                err := fmt.Errorf("failed to enqueue event: %v", enqueueErr)
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">ctx.JSON(http.StatusOK, "OK")</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package handlers
 
 import (
         "errors"
@@ -679,7 +816,7 @@ func (server *Server) RenewAccessToken(ctx *gin.Context) <span class="cov0" titl
 }
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">package handlers
+		<pre class="file" id="file7" style="display: none">package handlers
 
 import (
         "encoding/json"
@@ -742,7 +879,7 @@ func (server *Server) ExecuteAPIEvent(ctx *gin.Context) <span class="cov0" title
                 return
         }</span>
 
-        <span class="cov0" title="0">err = server.TaskManager.EnqueueArchiveTask(ctx, int(logId), server.Config.LogArchiveDuration)
+        <span class="cov0" title="0">err = server.TaskManager.EnqueueTask(ctx, int(logId), constants.TASK_ARCHIVE_LOG, constants.LOW_PRIORITY_QUEUE, server.Config.LogArchiveDuration)
         if err != nil </span><span class="cov0" title="0">{
                 ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
                 return
@@ -756,7 +893,7 @@ func (server *Server) ExecuteAPIEvent(ctx *gin.Context) <span class="cov0" title
 }
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">package handlers
+		<pre class="file" id="file8" style="display: none">package handlers
 
 import (
         "errors"
@@ -959,7 +1096,7 @@ func (server *Server) DeleteUser(ctx *gin.Context) <span class="cov0" title="0">
 }
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">package middleware
+		<pre class="file" id="file9" style="display: none">package middleware
 
 import (
         "errors"
