@@ -213,11 +213,11 @@ func (server *Server) CreateScheduledEvent(ctx *gin.Context) {
 	// If `RunAt` is provided → Enqueue with `ProcessAt`
 	if event.RunAt != nil {
 		enqueueTime := event.RunAt.UTC()
-		enqueueErr = server.TaskManager.EnqueueScheduleTaskAt(ctx, event.ID, enqueueTime)
+		enqueueErr = server.TaskManager.EnqueueTaskAt(ctx, event.ID, constants.TASK_SCHEDULE_EVENT, constants.CRITICAL_PRIORITY_QUEUE, enqueueTime)
 	} else {
 		// If `RunAfterMins` is provided → Enqueue with `ProcessIn`
 		delay := time.Duration(event.AfterXMins) * time.Minute
-		enqueueErr = server.TaskManager.EnqueueScheduleTaskIn(ctx, event.ID, delay)
+		enqueueErr = server.TaskManager.EnqueueTaskIn(ctx, event.ID, constants.TASK_SCHEDULE_EVENT, constants.CRITICAL_PRIORITY_QUEUE, delay)
 	}
 
 	if enqueueErr != nil {

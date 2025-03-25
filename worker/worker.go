@@ -5,14 +5,8 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/config"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/repo"
-)
-
-const (
-	TaskArchiveLog    = "log:archive"
-	TaskDeleteLog     = "log:delete"
-	TaskScheduleEvent = "event:schedule"
-	TaskTestSchedule  = "event:test"
 )
 
 // Worker struct holds Redis server, Redis client, and GORM DB
@@ -47,9 +41,10 @@ func StartWorker(redisAddr string, redisClient *asynq.Client, cfg config.Config,
 
 	// Register task handlers
 	mux := asynq.NewServeMux()
-	mux.HandleFunc(TaskArchiveLog, worker.ArchiveLogHandler)
-	mux.HandleFunc(TaskDeleteLog, worker.DeleteLogHandler)
-	mux.HandleFunc(TaskScheduleEvent, worker.ScheduleEventHandler)
+	mux.HandleFunc(constants.TASK_ARCHIVE_LOG, worker.ArchiveLogHandler)
+	mux.HandleFunc(constants.TASK_DELETE_LOG, worker.DeleteLogHandler)
+	mux.HandleFunc(constants.TASK_SCHEDULE_EVENT, worker.ScheduleEventHandler)
+	mux.HandleFunc(constants.TASK_TEST_EVENT, worker.ScheduleTestEventHandler)
 
 	log.Println("🚀 Worker started with Redis server, Redis client, and DB connection...")
 

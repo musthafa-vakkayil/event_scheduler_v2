@@ -110,11 +110,10 @@ func (server *Server) CreateTestScheduledEvent(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return
 	}
-	// Get the authenticated user from the token
-	authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
 
+	randomId := utils.RandomInt(100, 1000)
 	enqueueTime := req.RunAtDate.UTC()
-	enqueueErr := server.TaskManager.EnqueueTestTaskAt(ctx, authPayload.Username, enqueueTime)
+	enqueueErr := server.TaskManager.EnqueueTaskAt(ctx, randomId, constants.TASK_TEST_EVENT, constants.DEFAULT_PRIORITY_QUEUE, enqueueTime)
 
 	if enqueueErr != nil {
 		err := fmt.Errorf("failed to enqueue event: %v", enqueueErr)

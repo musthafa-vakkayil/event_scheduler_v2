@@ -15,42 +15,6 @@ type TaskManager struct {
 	mock.Mock
 }
 
-// EnqueueScheduleTaskAt provides a mock function with given fields: ctx, eventID, _a2
-func (_m *TaskManager) EnqueueScheduleTaskAt(ctx context.Context, eventID int64, _a2 time.Time) error {
-	ret := _m.Called(ctx, eventID, _a2)
-
-	if len(ret) == 0 {
-		panic("no return value specified for EnqueueScheduleTaskAt")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, time.Time) error); ok {
-		r0 = rf(ctx, eventID, _a2)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// EnqueueScheduleTaskIn provides a mock function with given fields: ctx, eventID, delay
-func (_m *TaskManager) EnqueueScheduleTaskIn(ctx context.Context, eventID int64, delay time.Duration) error {
-	ret := _m.Called(ctx, eventID, delay)
-
-	if len(ret) == 0 {
-		panic("no return value specified for EnqueueScheduleTaskIn")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, time.Duration) error); ok {
-		r0 = rf(ctx, eventID, delay)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // EnqueueTask provides a mock function with given fields: ctx, logID, taskType, queueType, delay
 func (_m *TaskManager) EnqueueTask(ctx context.Context, logID int, taskType string, queueType string, delay time.Duration) error {
 	ret := _m.Called(ctx, logID, taskType, queueType, delay)
@@ -69,17 +33,35 @@ func (_m *TaskManager) EnqueueTask(ctx context.Context, logID int, taskType stri
 	return r0
 }
 
-// EnqueueTestTaskAt provides a mock function with given fields: ctx, username, _a2
-func (_m *TaskManager) EnqueueTestTaskAt(ctx context.Context, username string, _a2 time.Time) error {
-	ret := _m.Called(ctx, username, _a2)
+// EnqueueTaskAt provides a mock function with given fields: ctx, eventID, taskType, queueType, _a4
+func (_m *TaskManager) EnqueueTaskAt(ctx context.Context, eventID int64, taskType string, queueType string, _a4 time.Time) error {
+	ret := _m.Called(ctx, eventID, taskType, queueType, _a4)
 
 	if len(ret) == 0 {
-		panic("no return value specified for EnqueueTestTaskAt")
+		panic("no return value specified for EnqueueTaskAt")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time) error); ok {
-		r0 = rf(ctx, username, _a2)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string, string, time.Time) error); ok {
+		r0 = rf(ctx, eventID, taskType, queueType, _a4)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// EnqueueTaskIn provides a mock function with given fields: ctx, eventID, taskType, queueType, delay
+func (_m *TaskManager) EnqueueTaskIn(ctx context.Context, eventID int64, taskType string, queueType string, delay time.Duration) error {
+	ret := _m.Called(ctx, eventID, taskType, queueType, delay)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnqueueTaskIn")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string, string, time.Duration) error); ok {
+		r0 = rf(ctx, eventID, taskType, queueType, delay)
 	} else {
 		r0 = ret.Error(0)
 	}

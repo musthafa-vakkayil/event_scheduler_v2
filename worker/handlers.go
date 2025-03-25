@@ -8,26 +8,14 @@ import (
 	"time"
 
 	"github.com/hibiken/asynq"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/tasks"
 )
 
-// LogPayload struct
-type LogPayload struct {
-	LogID int `json:"log_id"`
-}
-
-type EventPayload struct {
-	EventID int64 `json:"event_id"`
-}
-
-type TestEventPayload struct {
-	Username string `json:"username"`
-}
-
 // ArchiveLogHandler processes the archive task
 func (w *Worker) ArchiveLogHandler(ctx context.Context, t *asynq.Task) error {
-	var payload LogPayload
+	var payload models.LogPayload
 	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
 	}
@@ -42,14 +30,14 @@ func (w *Worker) ArchiveLogHandler(ctx context.Context, t *asynq.Task) error {
 
 	log.Printf("✔️ Archived log ID: %d", payload.LogID)
 
-	// 👉 Enqueue the delete task using the shared Redis client
-	deleteTask, err := tasks.NewDeleteLogTask(payload.LogID)
+	// Enqueue the delete task using the shared Redis client
+	deleteTask, err := tasks.NewLogTask(payload.LogID, constants.TASK_DELETE_LOG, constants.LOW_PRIORITY_QUEUE)
 	if err != nil {
 		return fmt.Errorf("failed to create delete task: %v", err)
 	}
 
 	// Schedule the delete task in 46 hours
-	_, err = w.RedisClient.Enqueue(deleteTask, asynq.Queue("low"), asynq.ProcessIn(w.Config.LogDeleteDuration))
+	_, err = w.RedisClient.Enqueue(deleteTask, asynq.Queue(constants.LOW_PRIORITY_QUEUE), asynq.ProcessIn(w.Config.LogDeleteDuration))
 	if err != nil {
 		return fmt.Errorf("failed to enqueue delete task: %v", err)
 	}
@@ -61,7 +49,7 @@ func (w *Worker) ArchiveLogHandler(ctx context.Context, t *asynq.Task) error {
 
 // DeleteLogHandler processes the delete task
 func (w *Worker) DeleteLogHandler(ctx context.Context, t *asynq.Task) error {
-	var payload LogPayload
+	var payload models.LogPayload
 	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
 	}
@@ -80,7 +68,7 @@ func (w *Worker) DeleteLogHandler(ctx context.Context, t *asynq.Task) error {
 
 // ScheduleEventHandler processes the schedule event task
 func (w *Worker) ScheduleEventHandler(ctx context.Context, t *asynq.Task) error {
-	var payload EventPayload
+	var payload models.EventPayload
 	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
 	}
@@ -105,26 +93,26 @@ func (w *Worker) ScheduleEventHandler(ctx context.Context, t *asynq.Task) error 
 	}
 
 	// Create an archive task
-	archiveTask, err := tasks.NewArchiveLogTask(int(logId))
+	archiveTask, err := tasks.NewLogTask(int(logId), constants.TASK_ARCHIVE_LOG, constants.LOW_PRIORITY_QUEUE)
 	if err != nil {
 		return fmt.Errorf("failed to create archive task:%v", err)
 	}
 
 	// Enqueue the archive task with a 2-minute delay (for testing)
-	_, err = w.RedisClient.Enqueue(archiveTask, asynq.Queue("low"), asynq.ProcessIn(w.Config.LogArchiveDuration))
+	_, err = w.RedisClient.Enqueue(archiveTask, asynq.Queue(constants.LOW_PRIORITY_QUEUE), asynq.ProcessIn(w.Config.LogArchiveDuration))
 	if err != nil {
 		return fmt.Errorf("failed to enqueue archive task:%v", err)
 	}
 
 	if event.IsRecurring {
 		// Create a new schedule event task
-		scheduleEventTask, err := tasks.NewScheduleEventTask(event.ID)
+		scheduleEventTask, err := tasks.NewEventTask(event.ID, constants.TASK_SCHEDULE_EVENT, constants.CRITICAL_PRIORITY_QUEUE)
 		if err != nil {
 			return fmt.Errorf("failed to create schedule event task:%v", err)
 		}
 
 		// Enqueue the schedule event task with a delay
-		_, err = w.RedisClient.Enqueue(scheduleEventTask, asynq.Queue("critical"), asynq.ProcessAt(time.Now().Add(time.Duration(event.Interval)*time.Minute)))
+		_, err = w.RedisClient.Enqueue(scheduleEventTask, asynq.Queue(constants.CRITICAL_PRIORITY_QUEUE), asynq.ProcessAt(time.Now().Add(time.Duration(event.Interval)*time.Minute)))
 		if err != nil {
 			return fmt.Errorf("failed to enqueue schedule event task:%v", err)
 		}
@@ -137,35 +125,35 @@ func (w *Worker) ScheduleEventHandler(ctx context.Context, t *asynq.Task) error 
 
 // ScheduleEventHandler processes the schedule event task
 func (w *Worker) ScheduleTestEventHandler(ctx context.Context, t *asynq.Task) error {
-	var payload TestEventPayload
+	var payload models.EventPayload
 	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
 	}
 
-	log.Printf("✅ Executing test event created by: %s", payload.Username)
+	log.Printf("✅ Executing test event created by: %d", payload.EventID)
 
 	args := models.Log{
 		TriggeredOn: time.Now(),
 		Status:      "SUCCESS",
 		IsArchived:  false,
-		ExecutedBy:  payload.Username,
+		ExecutedBy:  "TEST_API",
 		LogType:     "TEST_EVENT",
 	}
 
 	// Execute the event
 	log, err := w.Repo.CreateLog(args)
 	if err != nil {
-		return fmt.Errorf("failed to execute test event %s: %v", payload.Username, err)
+		return fmt.Errorf("failed to execute test event %d: %v", payload.EventID, err)
 	}
 
 	// Create an archive task
-	archiveTask, err := tasks.NewArchiveLogTask(int(log.ID))
+	archiveTask, err := tasks.NewLogTask(int(log.ID), constants.TASK_ARCHIVE_LOG, constants.LOW_PRIORITY_QUEUE)
 	if err != nil {
 		return fmt.Errorf("failed to create archive task:%v", err)
 	}
 
 	// Enqueue the archive task with a 2-minute delay (for testing)
-	_, err = w.RedisClient.Enqueue(archiveTask, asynq.Queue("low"), asynq.ProcessIn(w.Config.LogArchiveDuration))
+	_, err = w.RedisClient.Enqueue(archiveTask, asynq.Queue(constants.LOW_PRIORITY_QUEUE), asynq.ProcessIn(w.Config.LogArchiveDuration))
 	if err != nil {
 		return fmt.Errorf("failed to enqueue archive task:%v", err)
 	}
