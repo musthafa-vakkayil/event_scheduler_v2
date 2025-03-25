@@ -66,14 +66,26 @@ definitions:
     - name
     - type
     type: object
-  models.CreateTestScheduledEventRequest:
-    description: CreateTestScheduledEventRequest object used for input
+  models.CreateTestEventRequest:
+    description: CreateTestEventRequest object used for swagger
     properties:
+      name:
+        example: Test Event 1
+        type: string
+      run_after_x_mins:
+        example: 5
+        type: integer
       run_at_this_date:
         example: "2021-08-01T00:00:00Z"
         type: string
+      type:
+        enum:
+        - SCHEDULED
+        example: SCHEDULED
+        type: string
     required:
-    - run_at_this_date
+    - name
+    - type
     type: object
   models.CreateUserRequest:
     description: CreateUserRequest object used for input
@@ -547,12 +559,12 @@ paths:
       - application/json
       description: Schedule a one time event
       parameters:
-      - description: Schedule Event data
+      - description: Test Event data
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.CreateTestScheduledEventRequest'
+          $ref: '#/definitions/models.CreateTestEventRequest'
       produces:
       - application/json
       responses:

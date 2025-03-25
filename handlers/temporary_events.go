@@ -92,7 +92,7 @@ func (server *Server) CreateTestAPIEvent(ctx *gin.Context) {
 // @Tags Test Events
 // @Accept json
 // @Produce json
-// @Param request body models.CreateTestScheduledEventRequest true "Schedule Event data"
+// @Param request body models.CreateTestEventRequest true "Test Event data"
 // @Success 200 {object} models.EmptyResponse
 // @Failure 400 {object} models.BadRequestResponse
 // @Failure 401 {object} models.UnauthorizedRequestResponse

@@ -81,3 +81,11 @@ type SwaggerLogs struct {
 
 // @Description SwaggerLogsResponse used only for Swagger docs
 type SwaggerLogsResponse []SwaggerLogs
+
+// @Description CreateTestEventRequest object used for swagger
+type CreateTestEventRequest struct {
+	Name         string     `json:"name" binding:"required" example:"Test Event 1"`
+	Type         string     `json:"type" binding:"required,oneof=SCHEDULED" example:"SCHEDULED"`
+	RunAtDate    *time.Time `json:"run_at_this_date" example:"2021-08-01T00:00:00Z"`
+	RunAfterMins int        `json:"run_after_x_mins" example:"5"`
+}

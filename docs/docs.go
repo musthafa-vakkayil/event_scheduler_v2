@@ -511,12 +511,12 @@ const docTemplate = `{
                 "summary": "Create Test Scheduled Event",
                 "parameters": [
                     {
-                        "description": "Schedule Event data",
+                        "description": "Test Event data",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CreateTestScheduledEventRequest"
+                            "$ref": "#/definitions/models.CreateTestEventRequest"
                         }
                     }
                 ],
@@ -852,16 +852,32 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CreateTestScheduledEventRequest": {
-            "description": "CreateTestScheduledEventRequest object used for input",
+        "models.CreateTestEventRequest": {
+            "description": "CreateTestEventRequest object used for swagger",
             "type": "object",
             "required": [
-                "run_at_this_date"
+                "name",
+                "type"
             ],
             "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "Test Event 1"
+                },
+                "run_after_x_mins": {
+                    "type": "integer",
+                    "example": 5
+                },
                 "run_at_this_date": {
                     "type": "string",
                     "example": "2021-08-01T00:00:00Z"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "SCHEDULED"
+                    ],
+                    "example": "SCHEDULED"
                 }
             }
         },
