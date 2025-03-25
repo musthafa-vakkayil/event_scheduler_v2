@@ -360,6 +360,39 @@ paths:
       summary: Get Event by ID
       tags:
       - Events
+  /events/{id}/execute:
+    get:
+      description: Execute an API event by making an API call
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.EmptyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.BadRequestResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.UnauthorizedRequestResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.InternalServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Execute an API event
+      tags:
+      - Events
   /events/api:
     post:
       consumes:
@@ -432,6 +465,23 @@ paths:
       summary: Create Scheduled Event
       tags:
       - Events
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Returns the server's health status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Check the health of the server
+      tags:
+      - Health
   /login:
     post:
       consumes:
@@ -523,8 +573,6 @@ paths:
       - Logs
   /test/events/api:
     post:
-      consumes:
-      - application/json
       description: Create a new API Event without saving to DB
       parameters:
       - description: API Event data
@@ -536,6 +584,10 @@ paths:
       produces:
       - application/json
       responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.EmptyResponse'
         "400":
           description: Bad Request
           schema:

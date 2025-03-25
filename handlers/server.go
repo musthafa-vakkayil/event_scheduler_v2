@@ -65,6 +65,7 @@ func (server *Server) SetupRoutes() {
 	}))
 
 	// Open routes
+	router.GET("/health", server.HealthCheckHandler)
 	router.POST("/login", server.Login)
 	router.POST("/users", server.CreateUser)
 	router.POST("/token/renew", server.RenewAccessToken)

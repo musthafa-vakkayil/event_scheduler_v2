@@ -13,6 +13,18 @@ import (
 	"github.com/musthafa-vakkayil/event_scheduler_v2/utils"
 )
 
+// ExecuteAPIEvent godoc
+// @Summary Execute an API event
+// @Description Execute an API event by making an API call
+// @Tags Events
+// @Produce json
+// @Param id path int true "Event ID"
+// @Success 200 {object} models.EmptyResponse
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
+// @Router /events/{id}/execute [get]
+// @Security BearerAuth
 func (server *Server) ExecuteAPIEvent(ctx *gin.Context) {
 	var req models.GetEventRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {

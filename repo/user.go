@@ -37,6 +37,12 @@ func (r *Repo) DeleteUser(username string) error {
 		return tx.Error
 	}
 
+	// Delete sessions created by user
+	if err := tx.Where("username = ?", username).Delete(&models.Session{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	// Delete events created by user
 	if err := tx.Where("created_by = ?", username).Delete(&models.Event{}).Error; err != nil {
 		tx.Rollback()

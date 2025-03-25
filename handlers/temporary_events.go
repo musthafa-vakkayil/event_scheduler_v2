@@ -19,9 +19,9 @@ import (
 // @Summary Create Test API Event
 // @Description Create a new API Event without saving to DB
 // @Tags Test Events
-// @Accept json
 // @Produce json
 // @Param request body models.CreateAPIEventRequestSwagger true "API Event data"
+// @Success 200 {object} models.EmptyResponse
 // @Failure 400 {object} models.BadRequestResponse
 // @Failure 401 {object} models.UnauthorizedRequestResponse
 // @Failure 500 {object} models.InternalServerErrorResponse
