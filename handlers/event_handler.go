@@ -10,6 +10,7 @@ import (
 	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/utils"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/validator"
 )
 
@@ -167,6 +168,7 @@ func (server *Server) CreateScheduledEvent(ctx *gin.Context) {
 	err := validator.ValidateScheduleEventRequest(req)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
 	}
 
 	// If `IsRecurring` is true, `IntervalMins` must be greater than 0
@@ -179,11 +181,18 @@ func (server *Server) CreateScheduledEvent(ctx *gin.Context) {
 	// Get the authenticated user from the token
 	authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
 
+	// Parse time using the shared function
+	runTime, err := utils.ParseAndValidateTime(req.RunAtDate)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
+	}
+
 	// Map the request to the Event model
 	arg := models.Event{
 		Name:        req.Name,
 		Type:        req.Type,
-		RunAt:       req.RunAtDate,
+		RunAt:       runTime,
 		AfterXMins:  req.RunAfterMins,
 		Interval:    req.IntervalMins,
 		IsRecurring: req.IsRecurring,
@@ -202,8 +211,7 @@ func (server *Server) CreateScheduledEvent(ctx *gin.Context) {
 
 	// If `RunAt` is provided → Enqueue with `ProcessAt`
 	if event.RunAt != nil {
-		enqueueTime := event.RunAt.UTC()
-		enqueueErr = server.TaskManager.EnqueueTaskAt(ctx, event.ID, constants.TASK_SCHEDULE_EVENT, constants.CRITICAL_PRIORITY_QUEUE, enqueueTime)
+		enqueueErr = server.TaskManager.EnqueueTaskAt(ctx, event.ID, constants.TASK_SCHEDULE_EVENT, constants.CRITICAL_PRIORITY_QUEUE, *event.RunAt)
 	} else {
 		// If `RunAfterMins` is provided → Enqueue with `ProcessIn`
 		delay := time.Duration(event.AfterXMins) * time.Minute

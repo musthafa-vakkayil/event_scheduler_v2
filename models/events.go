@@ -44,12 +44,12 @@ type GetEventRequest struct {
 
 // @Description CreateScheduledEventRequest object used for input
 type CreateScheduledEventRequest struct {
-	Name         string     `json:"name" binding:"required" example:"Scheduled Event 1"`
-	Type         string     `json:"type" binding:"required,oneof=SCHEDULED" example:"SCHEDULED"`
-	RunAtDate    *time.Time `json:"run_at_this_date" example:"2021-08-01T00:00:00Z"`
-	RunAfterMins int        `json:"run_after_x_mins" example:"5"`
-	IntervalMins int        `json:"repeat_after_x_mins" example:"5"`
-	IsRecurring  bool       `json:"is_recurring" example:"false"`
+	Name         string `json:"name" binding:"required" example:"Scheduled Event 1"`
+	Type         string `json:"type" binding:"required,oneof=SCHEDULED" example:"SCHEDULED"`
+	RunAtDate    string `json:"run_at_this_date" example:"2025-03-25T12:15:00+05:30"`
+	RunAfterMins int    `json:"run_after_x_mins" example:"5"`
+	IntervalMins int    `json:"repeat_after_x_mins" example:"5"`
+	IsRecurring  bool   `json:"is_recurring" example:"false"`
 }
 
 // @Description CreateTestScheduledEventRequest object used for input

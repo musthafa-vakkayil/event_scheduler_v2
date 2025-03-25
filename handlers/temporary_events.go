@@ -109,16 +109,23 @@ func (server *Server) CreateTestScheduledEvent(ctx *gin.Context) {
 	err := validator.ValidateScheduleEventRequest(req)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
 	}
 
 	randomId := utils.RandomInt(100, 1000)
 	// Enqueue the task based on RunAt or RunAfter
 	var enqueueErr error
 
+	// Parse time using the shared function
+	runTime, err := utils.ParseAndValidateTime(req.RunAtDate)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+		return
+	}
+
 	// If `RunAt` is provided → Enqueue with `ProcessAt`
-	if req.RunAtDate != nil {
-		enqueueTime := req.RunAtDate.UTC()
-		enqueueErr = server.TaskManager.EnqueueTaskAt(ctx, randomId, constants.TASK_TEST_EVENT, constants.DEFAULT_PRIORITY_QUEUE, enqueueTime)
+	if runTime != nil {
+		enqueueErr = server.TaskManager.EnqueueTaskAt(ctx, randomId, constants.TASK_TEST_EVENT, constants.DEFAULT_PRIORITY_QUEUE, *runTime)
 	} else {
 		// If `RunAfterMins` is provided → Enqueue with `ProcessIn`
 		delay := time.Duration(req.RunAfterMins) * time.Minute
@@ -133,7 +140,7 @@ func (server *Server) CreateTestScheduledEvent(ctx *gin.Context) {
 
 	response := models.Event{
 		ID:         randomId,
-		RunAt:      req.RunAtDate,
+		RunAt:      nil,
 		AfterXMins: req.RunAfterMins,
 	}
 

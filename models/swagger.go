@@ -84,8 +84,8 @@ type SwaggerLogsResponse []SwaggerLogs
 
 // @Description CreateTestEventRequest object used for swagger
 type CreateTestEventRequest struct {
-	Name         string     `json:"name" binding:"required" example:"Test Event 1"`
-	Type         string     `json:"type" binding:"required,oneof=SCHEDULED" example:"SCHEDULED"`
-	RunAtDate    *time.Time `json:"run_at_this_date" example:"2021-08-01T00:00:00Z"`
-	RunAfterMins int        `json:"run_after_x_mins" example:"5"`
+	Name         string `json:"name" binding:"required" example:"Test Event 1"`
+	Type         string `json:"type" binding:"required,oneof=SCHEDULED" example:"SCHEDULED"`
+	RunAtDate    string `json:"run_at_this_date" example:"2025-03-25T12:56:00+05:30"`
+	RunAfterMins int    `json:"run_after_x_mins" example:"5"`
 }

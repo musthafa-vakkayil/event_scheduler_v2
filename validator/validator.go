@@ -2,9 +2,9 @@ package validator
 
 import (
 	"errors"
-	"time"
 
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/utils"
 )
 
 func ValidateAPIEventRequest(req models.CreateAPIEventRequest) error {
@@ -17,14 +17,15 @@ func ValidateAPIEventRequest(req models.CreateAPIEventRequest) error {
 
 func ValidateScheduleEventRequest(req models.CreateScheduledEventRequest) error {
 	// Either `RunAtDate` or `RunAfterMins` should be provided
-	if (req.RunAtDate == nil && req.RunAfterMins <= 0) || (req.RunAtDate != nil && req.RunAfterMins > 0) {
+	if (req.RunAtDate == "" && req.RunAfterMins <= 0) || (req.RunAtDate != "" && req.RunAfterMins > 0) {
 		return errors.New("provide either 'run_at_this_date' or 'run_after_x_mins', but not both")
 	}
 
-	// If `RunAtDate` is provided, ensure it's in the future
-	if req.RunAtDate != nil {
-		if req.RunAtDate.Before(time.Now()) {
-			return errors.New("run_at_this_date cannot be in the past")
+	// Validate and parse time if provided
+	if req.RunAtDate != "" {
+		_, err := utils.ParseAndValidateTime(req.RunAtDate)
+		if err != nil {
+			return err
 		}
 	}
 

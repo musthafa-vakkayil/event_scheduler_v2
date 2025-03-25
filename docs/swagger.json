@@ -838,7 +838,7 @@
                 },
                 "run_at_this_date": {
                     "type": "string",
-                    "example": "2021-08-01T00:00:00Z"
+                    "example": "2025-03-25T12:15:00+05:30"
                 },
                 "type": {
                     "type": "string",
@@ -867,7 +867,7 @@
                 },
                 "run_at_this_date": {
                     "type": "string",
-                    "example": "2021-08-01T00:00:00Z"
+                    "example": "2025-03-25T12:56:00+05:30"
                 },
                 "type": {
                     "type": "string",
