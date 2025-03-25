@@ -22,6 +22,11 @@ type Repository interface {
 	MarkLogAsArchived(logID int) error
 	DeleteLog(logID int) error
 	CreateLog(log models.Log) (models.Log, error)
+	StoreTaskID(et models.EventTask) error
+	IsTaskCanceled(taskID string) (bool, error)
+	UpdateEvent(event models.Event) (models.Event, error)
+	CancelTasksForEvent(eventID int) error
+	DeleteTaskEvent(taskID string) error
 }
 
 // Repository struct holds the GORM database instance

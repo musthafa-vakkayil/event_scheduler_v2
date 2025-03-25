@@ -84,6 +84,8 @@ func (server *Server) SetupRoutes() {
 	authRoutes.GET("/events/:id", server.GetEvent)
 	authRoutes.GET("/events/:id/execute", server.ExecuteAPIEvent)
 	authRoutes.DELETE("/events/:id", server.DeleteEvent)
+	authRoutes.PUT("/events/schedule/:id", server.UpdateScheduledEvent)
+	authRoutes.PUT("/events/api/:id", server.EditAPIEvent)
 
 	// Log Routes
 	authRoutes.GET("/logs", server.ListLogs)

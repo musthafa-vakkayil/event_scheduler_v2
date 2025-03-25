@@ -56,3 +56,9 @@ type CreateScheduledEventRequest struct {
 type CreateTestScheduledEventRequest struct {
 	RunAtDate time.Time `json:"run_at_this_date" binding:"required" example:"2021-08-01T00:00:00Z"`
 }
+
+type EventTask struct {
+	EventID    int    `json:"event_id"`
+	TaskID     string `json:"task_id"`
+	IsCanceled bool   `json:"is_canceled"`
+}

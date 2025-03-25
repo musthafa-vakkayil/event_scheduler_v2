@@ -429,6 +429,42 @@ paths:
       summary: Create API Event
       tags:
       - Events
+  /events/api/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Edit an API Event
+      parameters:
+      - description: API Event data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateAPIEventRequestSwagger'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SwaggerEventDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.BadRequestResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.UnauthorizedRequestResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.InternalServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Edit API Event
+      tags:
+      - Events
   /events/schedule:
     post:
       consumes:
@@ -463,6 +499,42 @@ paths:
       security:
       - BearerAuth: []
       summary: Create Scheduled Event
+      tags:
+      - Events
+  /events/schedule/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Edit a Scheduled Event Details
+      parameters:
+      - description: Schedule Event data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateScheduledEventRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SwaggerEventDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.BadRequestResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.UnauthorizedRequestResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.InternalServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Edit Scheduled Event
       tags:
       - Events
   /health:

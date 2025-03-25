@@ -125,11 +125,11 @@ func (server *Server) CreateTestScheduledEvent(ctx *gin.Context) {
 
 	// If `RunAt` is provided → Enqueue with `ProcessAt`
 	if runTime != nil {
-		enqueueErr = server.TaskManager.EnqueueTaskAt(ctx, randomId, constants.TASK_TEST_EVENT, constants.DEFAULT_PRIORITY_QUEUE, *runTime)
+		_, enqueueErr = server.TaskManager.EnqueueTaskAt(ctx, randomId, constants.TASK_TEST_EVENT, constants.DEFAULT_PRIORITY_QUEUE, *runTime)
 	} else {
 		// If `RunAfterMins` is provided → Enqueue with `ProcessIn`
 		delay := time.Duration(req.RunAfterMins) * time.Minute
-		enqueueErr = server.TaskManager.EnqueueTaskIn(ctx, randomId, constants.TASK_TEST_EVENT, constants.DEFAULT_PRIORITY_QUEUE, delay)
+		_, enqueueErr = server.TaskManager.EnqueueTaskIn(ctx, randomId, constants.TASK_TEST_EVENT, constants.DEFAULT_PRIORITY_QUEUE, delay)
 	}
 
 	if enqueueErr != nil {

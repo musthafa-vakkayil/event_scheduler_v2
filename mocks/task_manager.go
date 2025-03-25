@@ -34,39 +34,59 @@ func (_m *TaskManager) EnqueueTask(ctx context.Context, logID int, taskType stri
 }
 
 // EnqueueTaskAt provides a mock function with given fields: ctx, eventID, taskType, queueType, _a4
-func (_m *TaskManager) EnqueueTaskAt(ctx context.Context, eventID int64, taskType string, queueType string, _a4 time.Time) error {
+func (_m *TaskManager) EnqueueTaskAt(ctx context.Context, eventID int64, taskType string, queueType string, _a4 time.Time) (string, error) {
 	ret := _m.Called(ctx, eventID, taskType, queueType, _a4)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnqueueTaskAt")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string, string, time.Time) error); ok {
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string, string, time.Time) (string, error)); ok {
+		return rf(ctx, eventID, taskType, queueType, _a4)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string, string, time.Time) string); ok {
 		r0 = rf(ctx, eventID, taskType, queueType, _a4)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(string)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string, string, time.Time) error); ok {
+		r1 = rf(ctx, eventID, taskType, queueType, _a4)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // EnqueueTaskIn provides a mock function with given fields: ctx, eventID, taskType, queueType, delay
-func (_m *TaskManager) EnqueueTaskIn(ctx context.Context, eventID int64, taskType string, queueType string, delay time.Duration) error {
+func (_m *TaskManager) EnqueueTaskIn(ctx context.Context, eventID int64, taskType string, queueType string, delay time.Duration) (string, error) {
 	ret := _m.Called(ctx, eventID, taskType, queueType, delay)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnqueueTaskIn")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string, string, time.Duration) error); ok {
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string, string, time.Duration) (string, error)); ok {
+		return rf(ctx, eventID, taskType, queueType, delay)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string, string, time.Duration) string); ok {
 		r0 = rf(ctx, eventID, taskType, queueType, delay)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(string)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string, string, time.Duration) error); ok {
+		r1 = rf(ctx, eventID, taskType, queueType, delay)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // NewTaskManager creates a new instance of TaskManager. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

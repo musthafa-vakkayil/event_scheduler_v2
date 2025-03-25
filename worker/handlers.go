@@ -73,6 +73,22 @@ func (w *Worker) ScheduleEventHandler(ctx context.Context, t *asynq.Task) error 
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
 	}
 
+	taskId := t.ResultWriter().TaskID()
+
+	isCanceled, err := w.Repo.IsTaskCanceled(taskId)
+	if err != nil {
+		return fmt.Errorf("failed to check if task is canceled: %v", err)
+	}
+
+	if isCanceled {
+		log.Printf("🚫 Task %s is canceled. Skipping execution.", taskId)
+		err := w.Repo.DeleteTaskEvent(taskId)
+		if err != nil {
+			return fmt.Errorf("failed to delete task event: %v", err)
+		}
+		return nil
+	}
+
 	log.Printf("✅ Executing event id: %d", payload.EventID)
 
 	// Get the event from the DB
@@ -120,12 +136,19 @@ func (w *Worker) ScheduleEventHandler(ctx context.Context, t *asynq.Task) error 
 		log.Printf("✔️ Scheduled Event ID for Recurring: %d", payload.EventID)
 	}
 
+	// Delete taskid after processing
+	err = w.Repo.DeleteTaskEvent(taskId)
+	if err != nil {
+		return fmt.Errorf("failed to delete task event: %v", err)
+	}
+
 	return nil
 }
 
 // ScheduleEventHandler processes the schedule event task
 func (w *Worker) ScheduleTestEventHandler(ctx context.Context, t *asynq.Task) error {
 	var payload models.EventPayload
+	fmt.Println("MusthafaFromWorker", t.ResultWriter().TaskID())
 	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
 	}

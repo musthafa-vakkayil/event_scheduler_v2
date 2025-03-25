@@ -78,6 +78,7 @@ func (r *Repo) ExecuteEvent(username string, eventID int64, logType string, stat
 }
 
 func (r *Repo) DeleteEvent(eventID int) error {
+	// Start a transaction
 	tx := r.DB.Begin()
 	if tx.Error != nil {
 		return tx.Error
@@ -86,8 +87,30 @@ func (r *Repo) DeleteEvent(eventID int) error {
 	// Delete the event
 	if err := tx.Where("id = ?", eventID).Delete(&models.Event{}).Error; err != nil {
 		tx.Rollback()
-		return err
+		return fmt.Errorf("failed to delete event: %v", err)
 	}
 
-	return tx.Commit().Error
+	// Mark related tasks as canceled
+	if err := tx.Table("event_tasks").Where("event_id = ?", eventID).Update("is_canceled", true).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to mark tasks as canceled: %v", err)
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("failed to commit transaction: %v", err)
+	}
+
+	return nil
+}
+
+func (r *Repo) UpdateEvent(event models.Event) (models.Event, error) {
+	err := r.DB.Model(&models.Event{}).
+		Where("id = ?", event.ID).
+		Updates(event).Error
+	if err != nil {
+		return models.Event{}, err
+	}
+
+	return event, nil
 }

@@ -16,6 +16,24 @@ type Repository struct {
 	mock.Mock
 }
 
+// CancelTasksForEvent provides a mock function with given fields: eventID
+func (_m *Repository) CancelTasksForEvent(eventID int) error {
+	ret := _m.Called(eventID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CancelTasksForEvent")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int) error); ok {
+		r0 = rf(eventID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CreateEvent provides a mock function with given fields: event
 func (_m *Repository) CreateEvent(event models.Event) (models.Event, error) {
 	ret := _m.Called(event)
@@ -164,6 +182,24 @@ func (_m *Repository) DeleteLog(logID int) error {
 	return r0
 }
 
+// DeleteTaskEvent provides a mock function with given fields: taskID
+func (_m *Repository) DeleteTaskEvent(taskID string) error {
+	ret := _m.Called(taskID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteTaskEvent")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(taskID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteUser provides a mock function with given fields: username
 func (_m *Repository) DeleteUser(username string) error {
 	ret := _m.Called(username)
@@ -294,6 +330,34 @@ func (_m *Repository) GetUser(username string) (models.User, error) {
 	return r0, r1
 }
 
+// IsTaskCanceled provides a mock function with given fields: taskID
+func (_m *Repository) IsTaskCanceled(taskID string) (bool, error) {
+	ret := _m.Called(taskID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsTaskCanceled")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (bool, error)); ok {
+		return rf(taskID)
+	}
+	if rf, ok := ret.Get(0).(func(string) bool); ok {
+		r0 = rf(taskID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(taskID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListEvents provides a mock function with given fields: limit, offset
 func (_m *Repository) ListEvents(limit int, offset int) ([]models.Event, error) {
 	ret := _m.Called(limit, offset)
@@ -370,6 +434,52 @@ func (_m *Repository) MarkLogAsArchived(logID int) error {
 	}
 
 	return r0
+}
+
+// StoreTaskID provides a mock function with given fields: et
+func (_m *Repository) StoreTaskID(et models.EventTask) error {
+	ret := _m.Called(et)
+
+	if len(ret) == 0 {
+		panic("no return value specified for StoreTaskID")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(models.EventTask) error); ok {
+		r0 = rf(et)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateEvent provides a mock function with given fields: event
+func (_m *Repository) UpdateEvent(event models.Event) (models.Event, error) {
+	ret := _m.Called(event)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateEvent")
+	}
+
+	var r0 models.Event
+	var r1 error
+	if rf, ok := ret.Get(0).(func(models.Event) (models.Event, error)); ok {
+		return rf(event)
+	}
+	if rf, ok := ret.Get(0).(func(models.Event) models.Event); ok {
+		r0 = rf(event)
+	} else {
+		r0 = ret.Get(0).(models.Event)
+	}
+
+	if rf, ok := ret.Get(1).(func(models.Event) error); ok {
+		r1 = rf(event)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // NewRepository creates a new instance of Repository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
