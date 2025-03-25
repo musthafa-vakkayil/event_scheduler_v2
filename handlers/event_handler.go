@@ -10,6 +10,7 @@ import (
 	"github.com/musthafa-vakkayil/event_scheduler_v2/constants"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/validator"
 )
 
 // @Summary Create API Event
@@ -34,8 +35,8 @@ func (server *Server) CreateAPIEvent(ctx *gin.Context) {
 	authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
 
 	// Validation for API Trigger
-	if req.Type == "API" && req.ApiMethod != "GET" && req.ApiMethod != "DELETE" && req.ApiPayload == nil {
-		err := errors.New("api payload is required for methods other than GET and delete")
+	err := validator.ValidateAPIEventRequest(req)
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return
 	}
@@ -163,20 +164,9 @@ func (server *Server) CreateScheduledEvent(ctx *gin.Context) {
 		return
 	}
 
-	// Either `RunAtDate` or `RunAfterMins` should be provided
-	if (req.RunAtDate == nil && req.RunAfterMins <= 0) || (req.RunAtDate != nil && req.RunAfterMins > 0) {
-		err := errors.New("provide either 'run_at_this_date' or 'run_after_x_mins', but not both")
+	err := validator.ValidateScheduleEventRequest(req)
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
-		return
-	}
-
-	// If `RunAtDate` is provided, ensure it's in the future
-	if req.RunAtDate != nil {
-		if req.RunAtDate.Before(time.Now()) {
-			err := errors.New("run_at_this_date cannot be in the past")
-			ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
-			return
-		}
 	}
 
 	// If `IsRecurring` is true, `IntervalMins` must be greater than 0

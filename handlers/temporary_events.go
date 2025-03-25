@@ -13,6 +13,7 @@ import (
 	"github.com/musthafa-vakkayil/event_scheduler_v2/models"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/token"
 	"github.com/musthafa-vakkayil/event_scheduler_v2/utils"
+	"github.com/musthafa-vakkayil/event_scheduler_v2/validator"
 )
 
 // @Summary Create Test API Event
@@ -36,8 +37,8 @@ func (server *Server) CreateTestAPIEvent(ctx *gin.Context) {
 	authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
 
 	// Validation for API Trigger
-	if req.Type == "API" && req.ApiMethod != "GET" && req.ApiMethod != "DELETE" && req.ApiPayload == nil {
-		err := errors.New("api payload is required for methods other than GET and delete")
+	err := validator.ValidateAPIEventRequest(req)
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return
 	}
@@ -99,21 +100,30 @@ func (server *Server) CreateTestAPIEvent(ctx *gin.Context) {
 // @Router /test/events/schedule [post]
 // @Security BearerAuth
 func (server *Server) CreateTestScheduledEvent(ctx *gin.Context) {
-	var req models.CreateTestScheduledEventRequest
+	var req models.CreateScheduledEventRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
 		return
 	}
 
-	if req.RunAtDate.Before(time.Now()) {
-		err := errors.New("run_at_this_date cannot be in the past")
+	err := validator.ValidateScheduleEventRequest(req)
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
-		return
 	}
 
 	randomId := utils.RandomInt(100, 1000)
-	enqueueTime := req.RunAtDate.UTC()
-	enqueueErr := server.TaskManager.EnqueueTaskAt(ctx, randomId, constants.TASK_TEST_EVENT, constants.DEFAULT_PRIORITY_QUEUE, enqueueTime)
+	// Enqueue the task based on RunAt or RunAfter
+	var enqueueErr error
+
+	// If `RunAt` is provided → Enqueue with `ProcessAt`
+	if req.RunAtDate != nil {
+		enqueueTime := req.RunAtDate.UTC()
+		enqueueErr = server.TaskManager.EnqueueTaskAt(ctx, randomId, constants.TASK_TEST_EVENT, constants.DEFAULT_PRIORITY_QUEUE, enqueueTime)
+	} else {
+		// If `RunAfterMins` is provided → Enqueue with `ProcessIn`
+		delay := time.Duration(req.RunAfterMins) * time.Minute
+		enqueueErr = server.TaskManager.EnqueueTaskIn(ctx, randomId, constants.TASK_TEST_EVENT, constants.DEFAULT_PRIORITY_QUEUE, delay)
+	}
 
 	if enqueueErr != nil {
 		err := fmt.Errorf("failed to enqueue event: %v", enqueueErr)
@@ -121,5 +131,11 @@ func (server *Server) CreateTestScheduledEvent(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, "OK")
+	response := models.Event{
+		ID:         randomId,
+		RunAt:      req.RunAtDate,
+		AfterXMins: req.RunAfterMins,
+	}
+
+	ctx.JSON(http.StatusOK, response)
 }
