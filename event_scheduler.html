@@ -59,21 +59,23 @@
 				
 				<option value="file1">github.com/musthafa-vakkayil/event_scheduler_v2/cache/logs.go (78.1%)</option>
 				
-				<option value="file2">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/event_handler.go (26.6%)</option>
+				<option value="file2">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/event_handler.go (13.7%)</option>
 				
-				<option value="file3">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/log_handler.go (100.0%)</option>
+				<option value="file3">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/health_check.go (0.0%)</option>
 				
-				<option value="file4">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/server.go (63.2%)</option>
+				<option value="file4">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/log_handler.go (100.0%)</option>
 				
-				<option value="file5">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/temporary_events.go (0.0%)</option>
+				<option value="file5">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/server.go (65.9%)</option>
 				
-				<option value="file6">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/token_handler.go (0.0%)</option>
+				<option value="file6">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/temporary_events.go (0.0%)</option>
 				
-				<option value="file7">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/trigger_handler.go (0.0%)</option>
+				<option value="file7">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/token_handler.go (0.0%)</option>
 				
-				<option value="file8">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/user_handler.go (67.1%)</option>
+				<option value="file8">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/trigger_handler.go (0.0%)</option>
 				
-				<option value="file9">github.com/musthafa-vakkayil/event_scheduler_v2/middleware/middleware.go (87.0%)</option>
+				<option value="file9">github.com/musthafa-vakkayil/event_scheduler_v2/handlers/user_handler.go (67.1%)</option>
+				
+				<option value="file10">github.com/musthafa-vakkayil/event_scheduler_v2/middleware/middleware.go (87.0%)</option>
 				
 				</select>
 			</div>
@@ -196,6 +198,8 @@ import (
         "github.com/musthafa-vakkayil/event_scheduler_v2/constants"
         "github.com/musthafa-vakkayil/event_scheduler_v2/models"
         "github.com/musthafa-vakkayil/event_scheduler_v2/token"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/utils"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/validator"
 )
 
 // @Summary Create API Event
@@ -220,8 +224,8 @@ func (server *Server) CreateAPIEvent(ctx *gin.Context) <span class="cov0" title=
         <span class="cov0" title="0">authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
 
         // Validation for API Trigger
-        if req.Type == "API" &amp;&amp; req.ApiMethod != "GET" &amp;&amp; req.ApiMethod != "DELETE" &amp;&amp; req.ApiPayload == nil </span><span class="cov0" title="0">{
-                err := errors.New("api payload is required for methods other than GET and delete")
+        err := validator.ValidateAPIEventRequest(req)
+        if err != nil </span><span class="cov0" title="0">{
                 ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
                 return
         }</span>
@@ -349,21 +353,11 @@ func (server *Server) CreateScheduledEvent(ctx *gin.Context) <span class="cov0" 
                 return
         }</span>
 
-        // Either `RunAtDate` or `RunAfterMins` should be provided
-        <span class="cov0" title="0">if (req.RunAtDate == nil &amp;&amp; req.RunAfterMins &lt;= 0) || (req.RunAtDate != nil &amp;&amp; req.RunAfterMins &gt; 0) </span><span class="cov0" title="0">{
-                err := errors.New("provide either 'run_at_this_date' or 'run_after_x_mins', but not both")
+        <span class="cov0" title="0">err := validator.ValidateScheduleEventRequest(req)
+        if err != nil </span><span class="cov0" title="0">{
                 ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
                 return
         }</span>
-
-        // If `RunAtDate` is provided, ensure it's in the future
-        <span class="cov0" title="0">if req.RunAtDate != nil </span><span class="cov0" title="0">{
-                if req.RunAtDate.Before(time.Now()) </span><span class="cov0" title="0">{
-                        err := errors.New("run_at_this_date cannot be in the past")
-                        ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
-                        return
-                }</span>
-        }
 
         // If `IsRecurring` is true, `IntervalMins` must be greater than 0
         <span class="cov0" title="0">if req.IsRecurring &amp;&amp; req.IntervalMins &lt;= 0 </span><span class="cov0" title="0">{
@@ -375,11 +369,18 @@ func (server *Server) CreateScheduledEvent(ctx *gin.Context) <span class="cov0" 
         // Get the authenticated user from the token
         <span class="cov0" title="0">authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
 
+        // Parse time using the shared function
+        runTime, err := utils.ParseAndValidateTime(req.RunAtDate)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
         // Map the request to the Event model
-        arg := models.Event{
+        <span class="cov0" title="0">arg := models.Event{
                 Name:        req.Name,
                 Type:        req.Type,
-                RunAt:       req.RunAtDate,
+                RunAt:       runTime,
                 AfterXMins:  req.RunAfterMins,
                 Interval:    req.IntervalMins,
                 IsRecurring: req.IsRecurring,
@@ -394,20 +395,204 @@ func (server *Server) CreateScheduledEvent(ctx *gin.Context) <span class="cov0" 
         }</span>
 
         // Enqueue the task based on RunAt or RunAfter
-        <span class="cov0" title="0">var enqueueErr error
+        <span class="cov0" title="0">var taskId string
+        var enqueueErr error
 
         // If `RunAt` is provided → Enqueue with `ProcessAt`
         if event.RunAt != nil </span><span class="cov0" title="0">{
-                enqueueTime := event.RunAt.UTC()
-                enqueueErr = server.TaskManager.EnqueueScheduleTaskAt(ctx, event.ID, enqueueTime)
+                taskId, enqueueErr = server.TaskManager.EnqueueTaskAt(ctx, event.ID, constants.TASK_SCHEDULE_EVENT, constants.CRITICAL_PRIORITY_QUEUE, *event.RunAt)
         }</span> else<span class="cov0" title="0"> {
                 // If `RunAfterMins` is provided → Enqueue with `ProcessIn`
                 delay := time.Duration(event.AfterXMins) * time.Minute
-                enqueueErr = server.TaskManager.EnqueueScheduleTaskIn(ctx, event.ID, delay)
+                taskId, enqueueErr = server.TaskManager.EnqueueTaskIn(ctx, event.ID, constants.TASK_SCHEDULE_EVENT, constants.CRITICAL_PRIORITY_QUEUE, delay)
         }</span>
 
         <span class="cov0" title="0">if enqueueErr != nil </span><span class="cov0" title="0">{
                 err := fmt.Errorf("failed to enqueue event: %v", enqueueErr)
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">eventTask := models.EventTask{
+                EventID:    int(event.ID),
+                TaskID:     taskId,
+                IsCanceled: false,
+        }
+
+        err = server.Repo.StoreTaskID(eventTask)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">ctx.JSON(http.StatusOK, event)</span>
+}
+
+// @Summary Edit Scheduled Event
+// @Description Edit a Scheduled Event Details
+// @Tags Events
+// @Accept json
+// @Produce json
+// @Param request body models.CreateScheduledEventRequest true "Schedule Event data"
+// @Success 200 {object} models.SwaggerEventDto
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
+// @Router /events/schedule/{id} [put]
+// @Security BearerAuth
+func (server *Server) UpdateScheduledEvent(ctx *gin.Context) <span class="cov0" title="0">{
+        // Parse URI for event ID
+        var mod models.GetEventRequest
+        if err := ctx.ShouldBindUri(&amp;mod); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        // Parse request body
+        <span class="cov0" title="0">var req models.CreateScheduledEventRequest
+        if err := ctx.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        // Validate the request
+        <span class="cov0" title="0">err := validator.ValidateScheduleEventRequest(req)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        // Fetch the existing event
+        <span class="cov0" title="0">existingEvent, err := server.Repo.GetEvent(mod.ID)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusNotFound, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        // Parse new time
+        <span class="cov0" title="0">var runTime *time.Time
+        if req.RunAtDate != "" </span><span class="cov0" title="0">{
+                parsedTime, err := utils.ParseAndValidateTime(req.RunAtDate)
+                if err != nil </span><span class="cov0" title="0">{
+                        ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                        return
+                }</span>
+                <span class="cov0" title="0">runTime = parsedTime</span>
+        }
+
+        // Update event details
+        <span class="cov0" title="0">updatedEvent := models.Event{
+                ID:          int64(mod.ID),
+                Name:        req.Name,
+                Type:        req.Type,
+                RunAt:       runTime,
+                AfterXMins:  req.RunAfterMins,
+                Interval:    req.IntervalMins,
+                IsRecurring: req.IsRecurring,
+        }
+
+        // Update event in the database
+        event, err := server.Repo.UpdateEvent(updatedEvent)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        // Cancel the old task if the time or recurrence settings are changing
+        <span class="cov0" title="0">timeChanged := (runTime != nil &amp;&amp; existingEvent.RunAt != nil &amp;&amp; !runTime.Equal(*existingEvent.RunAt)) ||
+                (req.RunAfterMins != existingEvent.AfterXMins)
+
+        if timeChanged </span><span class="cov0" title="0">{
+                // Cancel old tasks
+                if err := server.Repo.CancelTasksForEvent(mod.ID); err != nil </span><span class="cov0" title="0">{
+                        ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                        return
+                }</span>
+
+                // Enqueue the task with new time settings
+                <span class="cov0" title="0">var taskID string
+                var enqueueErr error
+
+                if runTime != nil </span><span class="cov0" title="0">{
+                        taskID, enqueueErr = server.TaskManager.EnqueueTaskAt(ctx, event.ID, constants.TASK_SCHEDULE_EVENT, constants.CRITICAL_PRIORITY_QUEUE, *runTime)
+                }</span> else<span class="cov0" title="0"> {
+                        delay := time.Duration(event.AfterXMins) * time.Minute
+                        taskID, enqueueErr = server.TaskManager.EnqueueTaskIn(ctx, event.ID, constants.TASK_SCHEDULE_EVENT, constants.CRITICAL_PRIORITY_QUEUE, delay)
+                }</span>
+
+                <span class="cov0" title="0">if enqueueErr != nil </span><span class="cov0" title="0">{
+                        ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(fmt.Errorf("failed to enqueue event: %v", enqueueErr)))
+                        return
+                }</span>
+
+                // Store the new task ID in the database
+                <span class="cov0" title="0">err = server.Repo.StoreTaskID(models.EventTask{
+                        EventID:    int(event.ID),
+                        TaskID:     taskID,
+                        IsCanceled: false,
+                })
+                if err != nil </span><span class="cov0" title="0">{
+                        ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
+                        return
+                }</span>
+        }
+
+        <span class="cov0" title="0">ctx.JSON(http.StatusOK, event)</span>
+}
+
+// @Summary Edit API Event
+// @Description Edit an API Event
+// @Tags Events
+// @Accept json
+// @Produce json
+// @Param request body models.CreateAPIEventRequestSwagger true "API Event data"
+// @Success 200 {object} models.SwaggerEventDto
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
+// @Router /events/api/{id} [put]
+// @Security BearerAuth
+func (server *Server) EditAPIEvent(ctx *gin.Context) <span class="cov0" title="0">{
+        // Parse URI for event ID
+        var mod models.GetEventRequest
+        if err := ctx.ShouldBindUri(&amp;mod); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">var req models.CreateAPIEventRequest
+        if err := ctx.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
+
+        // Validation for API Trigger
+        err := validator.ValidateAPIEventRequest(req)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        // Fetch the existing event
+        <span class="cov0" title="0">_, err = server.Repo.GetEvent(mod.ID)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusNotFound, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">arg := models.Event{
+                Name:           req.Name,
+                Type:           req.Type,
+                ApiEndPoint:    req.ApiEndpoint,
+                ApiMethod:      req.ApiMethod,
+                CreatedBy:      authPayload.Username,
+                ApiRequestBody: req.ApiPayload,
+        }
+
+        event, err := server.Repo.UpdateEvent(arg)
+        if err != nil </span><span class="cov0" title="0">{
                 ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
                 return
         }</span>
@@ -417,6 +602,30 @@ func (server *Server) CreateScheduledEvent(ctx *gin.Context) <span class="cov0" 
 </pre>
 		
 		<pre class="file" id="file3" style="display: none">package handlers
+
+import (
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+)
+
+// HealthCheck godoc
+// @Summary Check the health of the server
+// @Description Returns the server's health status
+// @Tags Health
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} map[string]string
+// @Router /health [get]
+func (server *Server) HealthCheckHandler(c *gin.Context) <span class="cov0" title="0">{
+
+        c.JSON(http.StatusOK, gin.H{
+                "message": "Server is Up and Running",
+        })
+}</span>
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package handlers
 
 import (
         "log"
@@ -475,7 +684,7 @@ func (server *Server) ListLogs(ctx *gin.Context) <span class="cov8" title="1">{
 }
 </pre>
 		
-		<pre class="file" id="file4" style="display: none">package handlers
+		<pre class="file" id="file5" style="display: none">package handlers
 
 import (
         "fmt"
@@ -542,6 +751,7 @@ func (server *Server) SetupRoutes() <span class="cov8" title="1">{
         }))
 
         // Open routes
+        router.GET("/health", server.HealthCheckHandler)
         router.POST("/login", server.Login)
         router.POST("/users", server.CreateUser)
         router.POST("/token/renew", server.RenewAccessToken)
@@ -560,6 +770,8 @@ func (server *Server) SetupRoutes() <span class="cov8" title="1">{
         authRoutes.GET("/events/:id", server.GetEvent)
         authRoutes.GET("/events/:id/execute", server.ExecuteAPIEvent)
         authRoutes.DELETE("/events/:id", server.DeleteEvent)
+        authRoutes.PUT("/events/schedule/:id", server.UpdateScheduledEvent)
+        authRoutes.PUT("/events/api/:id", server.EditAPIEvent)
 
         // Log Routes
         authRoutes.GET("/logs", server.ListLogs)
@@ -607,7 +819,7 @@ func ConnectGORM(cfg config.Config) (*gorm.DB, error) <span class="cov0" title="
 }
 </pre>
 		
-		<pre class="file" id="file5" style="display: none">package handlers
+		<pre class="file" id="file6" style="display: none">package handlers
 
 import (
         "encoding/json"
@@ -622,14 +834,15 @@ import (
         "github.com/musthafa-vakkayil/event_scheduler_v2/models"
         "github.com/musthafa-vakkayil/event_scheduler_v2/token"
         "github.com/musthafa-vakkayil/event_scheduler_v2/utils"
+        "github.com/musthafa-vakkayil/event_scheduler_v2/validator"
 )
 
 // @Summary Create Test API Event
 // @Description Create a new API Event without saving to DB
 // @Tags Test Events
-// @Accept json
 // @Produce json
 // @Param request body models.CreateAPIEventRequestSwagger true "API Event data"
+// @Success 200 {object} models.EmptyResponse
 // @Failure 400 {object} models.BadRequestResponse
 // @Failure 401 {object} models.UnauthorizedRequestResponse
 // @Failure 500 {object} models.InternalServerErrorResponse
@@ -645,8 +858,8 @@ func (server *Server) CreateTestAPIEvent(ctx *gin.Context) <span class="cov0" ti
         <span class="cov0" title="0">authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
 
         // Validation for API Trigger
-        if req.Type == "API" &amp;&amp; req.ApiMethod != "GET" &amp;&amp; req.ApiMethod != "DELETE" &amp;&amp; req.ApiPayload == nil </span><span class="cov0" title="0">{
-                err := errors.New("api payload is required for methods other than GET and delete")
+        err := validator.ValidateAPIEventRequest(req)
+        if err != nil </span><span class="cov0" title="0">{
                 ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
                 return
         }</span>
@@ -700,7 +913,7 @@ func (server *Server) CreateTestAPIEvent(ctx *gin.Context) <span class="cov0" ti
 // @Tags Test Events
 // @Accept json
 // @Produce json
-// @Param request body models.CreateTestScheduledEventRequest true "Schedule Event data"
+// @Param request body models.CreateTestEventRequest true "Test Event data"
 // @Success 200 {object} models.EmptyResponse
 // @Failure 400 {object} models.BadRequestResponse
 // @Failure 401 {object} models.UnauthorizedRequestResponse
@@ -708,34 +921,55 @@ func (server *Server) CreateTestAPIEvent(ctx *gin.Context) <span class="cov0" ti
 // @Router /test/events/schedule [post]
 // @Security BearerAuth
 func (server *Server) CreateTestScheduledEvent(ctx *gin.Context) <span class="cov0" title="0">{
-        var req models.CreateTestScheduledEventRequest
+        var req models.CreateScheduledEventRequest
         if err := ctx.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
                 ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
                 return
         }</span>
 
-        <span class="cov0" title="0">if req.RunAtDate.Before(time.Now()) </span><span class="cov0" title="0">{
-                err := errors.New("run_at_this_date cannot be in the past")
+        <span class="cov0" title="0">err := validator.ValidateScheduleEventRequest(req)
+        if err != nil </span><span class="cov0" title="0">{
                 ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
                 return
         }</span>
-        // Get the authenticated user from the token
-        <span class="cov0" title="0">authPayload := ctx.MustGet(constants.AUTHORIZATION_PAYLOAD_KEY).(*token.Payload)
 
-        enqueueTime := req.RunAtDate.UTC()
-        enqueueErr := server.TaskManager.EnqueueTestTaskAt(ctx, authPayload.Username, enqueueTime)
+        <span class="cov0" title="0">randomId := utils.RandomInt(100, 1000)
+        // Enqueue the task based on RunAt or RunAfter
+        var enqueueErr error
 
-        if enqueueErr != nil </span><span class="cov0" title="0">{
+        // Parse time using the shared function
+        runTime, err := utils.ParseAndValidateTime(req.RunAtDate)
+        if err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, constants.ErrorResponse(err))
+                return
+        }</span>
+
+        // If `RunAt` is provided → Enqueue with `ProcessAt`
+        <span class="cov0" title="0">if runTime != nil </span><span class="cov0" title="0">{
+                _, enqueueErr = server.TaskManager.EnqueueTaskAt(ctx, randomId, constants.TASK_TEST_EVENT, constants.DEFAULT_PRIORITY_QUEUE, *runTime)
+        }</span> else<span class="cov0" title="0"> {
+                // If `RunAfterMins` is provided → Enqueue with `ProcessIn`
+                delay := time.Duration(req.RunAfterMins) * time.Minute
+                _, enqueueErr = server.TaskManager.EnqueueTaskIn(ctx, randomId, constants.TASK_TEST_EVENT, constants.DEFAULT_PRIORITY_QUEUE, delay)
+        }</span>
+
+        <span class="cov0" title="0">if enqueueErr != nil </span><span class="cov0" title="0">{
                 err := fmt.Errorf("failed to enqueue event: %v", enqueueErr)
                 ctx.JSON(http.StatusInternalServerError, constants.ErrorResponse(err))
                 return
         }</span>
 
-        <span class="cov0" title="0">ctx.JSON(http.StatusOK, "OK")</span>
+        <span class="cov0" title="0">response := models.Event{
+                ID:         randomId,
+                RunAt:      nil,
+                AfterXMins: req.RunAfterMins,
+        }
+
+        ctx.JSON(http.StatusOK, response)</span>
 }
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">package handlers
+		<pre class="file" id="file7" style="display: none">package handlers
 
 import (
         "errors"
@@ -816,7 +1050,7 @@ func (server *Server) RenewAccessToken(ctx *gin.Context) <span class="cov0" titl
 }
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">package handlers
+		<pre class="file" id="file8" style="display: none">package handlers
 
 import (
         "encoding/json"
@@ -831,6 +1065,18 @@ import (
         "github.com/musthafa-vakkayil/event_scheduler_v2/utils"
 )
 
+// ExecuteAPIEvent godoc
+// @Summary Execute an API event
+// @Description Execute an API event by making an API call
+// @Tags Events
+// @Produce json
+// @Param id path int true "Event ID"
+// @Success 200 {object} models.EmptyResponse
+// @Failure 400 {object} models.BadRequestResponse
+// @Failure 401 {object} models.UnauthorizedRequestResponse
+// @Failure 500 {object} models.InternalServerErrorResponse
+// @Router /events/{id}/execute [get]
+// @Security BearerAuth
 func (server *Server) ExecuteAPIEvent(ctx *gin.Context) <span class="cov0" title="0">{
         var req models.GetEventRequest
         if err := ctx.ShouldBindUri(&amp;req); err != nil </span><span class="cov0" title="0">{
@@ -893,7 +1139,7 @@ func (server *Server) ExecuteAPIEvent(ctx *gin.Context) <span class="cov0" title
 }
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">package handlers
+		<pre class="file" id="file9" style="display: none">package handlers
 
 import (
         "errors"
@@ -1096,7 +1342,7 @@ func (server *Server) DeleteUser(ctx *gin.Context) <span class="cov0" title="0">
 }
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">package middleware
+		<pre class="file" id="file10" style="display: none">package middleware
 
 import (
         "errors"
