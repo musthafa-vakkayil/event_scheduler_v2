@@ -1,113 +1,145 @@
-# Event Trigger System Using Golang and Postgres
+# Event Trigger System Using Golang and PostgreSQL
 
-### Credits
-Below are the resources utilized to create this server:
+## 🚀 **Credits**
+Resources used for building this server:
 
-1. **YouTube Tutorials**: 
-   - [ Master Background Tasks with Asynq ](https://www.youtube.com/watch?v=g1gbjMuDDP0&t=761s) 
-   - [How Caching your Go API Improves Performance](https://www.youtube.com/watch?v=7B5mXWYiQZE&t=641s)
-2. **ChatGPT**: For suggestions on debugging and refactoring code.
-3. **Stack Overflow**: Helpful threads on issues related to events, deployment, etc., with many useful answers.
-4. [**Deployment Tutorial**](https://www.youtube.com/watch?v=sSAWMr_-Co4&t=60s): This video guided the deployment of the server on AWS.
+1. **YouTube Tutorials:**  
+   - [Master Background Tasks with Asynq](https://www.youtube.com/watch?v=g1gbjMuDDP0&t=761s)  
+   - [How Caching Your Go API Improves Performance](https://www.youtube.com/watch?v=7B5mXWYiQZE&t=641s)  
+2. **ChatGPT:** For code debugging and refactoring suggestions.  
+3. **Stack Overflow:** For helpful discussions on events, deployment, and related issues.  
+4. **Deployment Tutorial:**  
+   - [AWS Deployment Guide](https://www.youtube.com/watch?v=sSAWMr_-Co4&t=60s)
 
-## Developer Note
-This is not a fully robust solution to the problem. Given the time constraints, I did my best to provide a working solution, but I am aware that it lacks some functionalities and does not handle certain edge cases. However, this has been a wonderful learning experience and an opportunity to expand my knowledge. Thank you for this opportunity; it has given me a solid foundation to improve and build further.
+---
+
+## 🛠️ **Developer Note**
+This is version 2 of the [event-trigger-using-go](https://github.com/musthafa-vakkayil/event_trigger_using_go) project. The goal is to enhance performance, optimize the solution, and add new features.  
+
+The project uses the [Asynq package](https://github.com/hibiken/asynq), a Redis-based background job queue, to manage scheduled tasks efficiently. I am continuously learning and open to optimizing it further with better solutions.  
+
+Thank you for your support! 
+
+---
+
+## 📚 **About This Project**
+This is a **Golang-based Trigger Scheduler App** that allows users to schedule and manage triggers.  
+
+There are two types of triggers:  
+- **Scheduled Trigger:** Supports one-time and recurring execution.  
+- **API Trigger:** Allows creating triggers to call API endpoints, which can be invoked later using another API.  
+
+---
+
+## 🔍 **Logs**
+The system maintains detailed logs of executed triggers:  
+- Logs stay in the **ACTIVE** state for 2 hours after execution.  
+- After 2 hours, logs move to the **ARCHIVE** state (hidden by default).  
+- Archived logs remain accessible and are deleted after 46 hours.  
+
+Log timing settings can be adjusted using environment variables.  
+
+---
+
+## ⚙️ **Additional Features**
+- You can test **one-time scheduled triggers** and **API triggers** without storing them in the database by using the same payload.  
+- Users must register and acquire a token to access the API.  
+- **Caching** is enabled for the recently called logs API to boost performance.  
+- **Background workers** manage events and logs efficiently.  
+
+---
+
+## 🌐 **Interacting With the Server**
+- **Base URL:** [http://18.205.239.53:8080/](http://18.205.239.53:8080/)  
+- **Swagger Documentation:** [http://18.205.239.53:8080/swagger/index.html#/](http://18.205.239.53:8080/swagger/index.html#/)  
+- **UI for Monitoring Tasks:** [http://18.205.239.53:8000/](http://18.205.239.53:8000/)  
+
+---
 
 
-### About this Project
+## 🔥 **Setting Up Locally**
 
-This project is a **Golang-based Trigger Scheduler App** that allows users to schedule and manage triggers. Triggers can be of two types:
-
-1. **Scheduled Trigger**: Can be one-time or recurring.
-2. **API Trigger**: Enables users to create a trigger to hit an API endpoint, which can be invoked later using another API.
-
-### Logs
-A key feature of the system is the detailed logs for executed triggers:
-- Logs remain in the **ACTIVE** state for the first 2 hours after execution.
-- After 2 hours, they are moved to the **ARCHIVE** state and are hidden by default.
-- Archived logs can still be viewed and are deleted after 46 hours.
-
-Timings for log states can be easily adjusted via the eniviornment variables.
-
-### Additional Features
-- Users can test **one-time scheduled triggers** and **API triggers** without storing them in the database by sending the same payload used for creating triggers. 
-- User need to register their self an acquire token to use the api
-- Recently called logs api has enabled caching for better performance
-- Backgroud workers are intgrated work managing events and logs
-
-
-## Interacting With the Server
-
-- **Base URL**: [http://18.205.239.53:8000/](http://18.205.239.53:8080/)
-- **Swagger Documentation**: [http://18.205.239.53:8000/swagger/index.html#/](http://18.205.239.53:8080/swagger/index.html#/)
-- **UI for Monitoring tasks**: [http://18.205.239.53:8080/](http://18.205.239.53:8000/)
-
-
-## Setting Up Locally
-
-### Option 1: Using Docker
-1. Clone this repository- (https://github.com/musthafa-vakkayil/event_scheduler_v2)
-2. Open a terminal and execute the following command:
-
+### ✅ **Option 1: Using Docker**
+1. Clone the repository:  
+   ```bash
+   git clone https://github.com/musthafa-vakkayil/event_scheduler_v2
+   ```
+2. Start the server:
    ```bash
    docker-compose up --build
    ```
 
 3. The server will be running at `localhost:8000`.
 
-### Option 2: Without Docker
+### 🔧 Option 2: Without Docker
 1. Clone this repository.
-2. Update the `app.env` file in the root level with your Postgres redis database details.
-3. Open a new terminal and run:
+2. Update the app.env file with your PostgreSQL and Redis details.
+3. Start the server:
 
    ```bash
    go run main.go
    ```
 
-4. The server will be running at `localhost:8000`.
+4. The server will run at localhost:8000.
 
 
-## Technical Details
-
-ERD Diagram is given below
+## 🛠️ Technical Details
+📊 ERD Diagram
 ![Blank diagram - Page 1](event_scheduler.png)
 
-go to [database diagram](https://dbdocs.io/musthuvakkayil/event_scheduler) to view detailed table details (use password 'database')
+For detailed table information, visit:
+[Database Diagram](https://dbdocs.io/musthuvakkayil/event_scheduler) (password: database)
 
 
-### 1. Database Details
-We use **PostgreSQL** as the database, consisting of five tables:   
-- **Users**  - Stores User Data
-- **Sessions** - Stores user session
-- **Events** - Stores both API and Scheduled Event Data
+### 1.🗄️ Database Schema 
+- **Users**  - Stores user data.
+- **Sessions** - Stores user sessions.
+- **Events** - Stores both API and scheduled event data.
 - **Logs** - Stores Executed Events details
-- **Events_Tasks** - Stores the backgroud task id for scheduled events
+- **Events_Tasks** - Stores background task IDs for scheduled events.
 
-The events table and session table is connected with user table via username foreign key.
+The Events and Sessions tables link to Users via username as a foreign key.
+The Logs table is standalone, simplifying background task operations like log deletion and archiving, even if the corresponding event is deleted.
 
-The logs table stay stand alone making it easier for the backgroud task to delete and archive logs. Also persist the log even the corresponding Event is deleted 
-
-The Event_Task table stores the Background task id for scheduled events. if a scheduled event gets deteled or gets updated(the execution time) we will mark that task as canceled. So the background worker will check this table and skip the task accordingly
-
-### 2. Server Details
-The server is implemented using Golang and is responsible for:
+### 2.🌟 Server Details
+The server, built with Golang, handles:
 
 - **Trigger scheduling**
 - **Handling API requests**
 - **Log management**
 
-**Folder Structure:** The code is organized into separate folders for better readability and maintainability. Eg:
-- Handlers: Handles incoming API requests.
-- Repo: Manages database interactions.
-- Cache: Responsible for API Caching
-- Tasks: Create and load tasks in Redis Queue
-- Worker: Backgroud worker which listens to Redis Queue and Process the tasks
-- Migrations: Database Migrations
-- Docs: Swagger Docs and Database docs
+**📁 Folder Structure:** 
+- Handlers: Manages incoming API requests.
+- Repo: Handles database interactions.
+- Cache: Manages API caching.
+- Tasks: Creates and loads tasks in the Redis queue.
+- Worker: Background worker that processes tasks from the Redis queue.
+- Migrations: Contains database migrations.
+- Docs: Contains Swagger and database documentation.
 
-## API Docs
+## 🚀 Deployment
+For deployment, I used an **AWS EC2 instance** with my free-tier subscription. The deployment process was automated using **GitHub Actions**.
 
-### CRUD API's for User
+
+### 💰 Pricing
+The approximate cost of running a **t3.micro EC2 instance** with a **16 GB EBS volume** for 30 days (24x7):
+
+#### 1. EC2 Instance Costs:
+- **Pricing**: $0.0104/hour in the US East (N. Virginia) region.
+- **Monthly Usage**: 30 days × 24 hours = 720 hours.
+- **Instance Cost**: 720 × $0.0104 = **$7.49**.
+
+#### 2. EBS Volume Costs:
+- **Volume Type**: General Purpose SSD (gp3).
+- **Pricing**: $0.08/GB/month.
+- **For a 16 GB volume**: 16 × $0.08 = **$1.28**.
+
+### Total Cost:
+**$7.49 + $1.28 = $8.77/month**.
+
+## 🔥 API Documentation
+
+### 🛡️ User APIs
 
 1. **Create User**
     - **Endpoint**: `/users` (POST)
@@ -215,9 +247,9 @@ The server is implemented using Golang and is responsible for:
             "access_token_expiry": "2025-03-25T13:25:26+05:30"
         }
         ```
-### CRUD for API Events
+### 🚀 Event APIs
 
-#### Common Event APIS
+#### Common APIS
 1. **View Event**
     - **Endpoint**: `/events/{id}` (GET) - Authorized Route 
     - Description: View Event Details.
@@ -341,10 +373,35 @@ The server is implemented using Golang and is responsible for:
     - **Endpoint**: `/events/api/{id}` (PUT) - Authorized Route 
     - Description: Update an API event.
     - **Curl Command**
+        - **Curl Command**
         ```bash
+        curl --location 'http://localhost:8000/events/api/1' \
+        --header 'Content-Type: application/json' \
+        --header 'Authorization: Bearer ••••••' \
+        --data '{
+            "name": "First Event",
+            "type": "API",
+            "api_endpoint": "https://httpbin.org/get",
+            "api_method": "GET"
+        }'
         ```
     - **Response**
         ```json
+        {
+            "ID": 1,
+            "name": "First Event",
+            "type": "API",
+            "api_endpoint": "https://httpbin.org/get",
+            "api_method": "GET",
+            "api_request_body": null,
+            "run_at": null,
+            "after_x_mins": 0,
+            "interval": 0,
+            "is_recurring": false,
+            "created_by": "berlin",
+            "CreatedAt": "2025-03-24T15:45:13.860662292Z",
+            "executed_at": null
+        }
         ```
 3. **Execute API Event**
     - **Endpoint**: `/events/{id}/execute` (GET) - Authorized Route 
@@ -462,7 +519,7 @@ The server is implemented using Golang and is responsible for:
             "executed_at": null
         }
         ```
-### Log API
+### 🛠️ Log APIs
 1. **List Logs**
     - **Endpoint**: `/logs` (GET) - Authorized Route 
     - Description: List All Executed Events.
